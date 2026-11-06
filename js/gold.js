@@ -1075,6 +1075,60 @@ function checkUrlPlanParam() {
     uInput.value = 'truongphutrong';
   }
 }
+// Ghi đè hàm tải DNS chạy trực tiếp trên trình duyệt
+function downloadProfileDNS() {
+  const targetUser = typeof currentUsername !== 'undefined' ? currentUsername : 'truongphutrong';
+  
+  const plistContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>DNSSettings</key>
+            <dict>
+                <key>DNSProtocol</key>
+                <string>HTTPS</string>
+                <key>ServerURL</key>
+                <string>https://doh.tocam.vip/dns-query</string>
+            </dict>
+            <key>PayloadIdentifier</key>
+            <string>com.tocam.locketgold.dns</string>
+            <key>PayloadType</key>
+            <string>com.apple.dnsSettings.managed</string>
+            <key>PayloadUUID</key>
+            <string>8F265C4B-1234-4C32-B89A-TOCAMVIP001</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+        </dict>
+    </array>
+    <key>PayloadDisplayName</key>
+    <string>Locket Gold - ${targetUser}</string>
+    <key>PayloadIdentifier</key>
+    <string>com.tocam.locketgold</string>
+    <key>PayloadOrganization</key>
+    <string>Tổ Cam VIP</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>12345678-ABCD-EF12-3456-789ABCDEF012</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>`;
+
+  const blob = new Blob([plistContent], { type: 'application/x-apple-aspen-config' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `LocketGold_${targetUser}.mobileconfig`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
 
 // ============================================

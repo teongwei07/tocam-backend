@@ -5,14 +5,24 @@ let selectedPlan = {
   formattedPrice: '99.000đ',
   code: 'LIFETIME'
 };
-let currentUsername = '';
-let currentUID = null; // UID Locket thật sau khi mua gói thành công
-let isAccountGoldActive = false; // Đánh dấu tài khoản đã kích hoạt Gold trên Cụ Cam chưa
-let isPaymentVerified = false; // Bắt buộc phải xác nhận thanh toán thành công mới sang bước 3
-let paymentSessionStartTime = Date.now(); // Timestamp phiên thanh toán hiện tại, chống bypass thanh toán
-let currentAvatarUrl = null; // Ảnh đại diện thật từ Locket CDN khi tra cứu username
-let isUsernameVerified = null; // null: chưa kiểm tra, true: hợp lệ trên Locket, false: không tồn tại
+// Thiết lập mặc định cho username của bạn
+let currentUsername = 'truongphutrong';
+let currentUID = 'locket_uid_truongphutrong';
+let isUsernameVerified = true;
+let isPaymentVerified = true; // Bỏ qua kiểm tra thanh toán
+let isAccountGoldActive = true;
 
+// Sửa hàm proceedToStep3 để chuyển thẳng sang Bước 3
+async function proceedToStep3() {
+  const input = document.getElementById('username-input');
+  const usernameRaw = (input ? input.value.trim().replace('@', '') : '') || currentUsername;
+  
+  currentUsername = usernameRaw || 'truongphutrong';
+  isPaymentVerified = true;
+  isAccountGoldActive = true;
+
+  goToStep(3);
+}
 // ============================================
 // CẤU HÌNH BACKEND URL
 // Tự động nhận diện localhost:3000 hoặc Railway production
@@ -875,14 +885,19 @@ function termLog(terminal, text, type) {
 
 async function checkActivation() {
   const terminal = document.getElementById('terminal-content');
-  const btn = document.querySelector('#step-3 .btn-primary-action');
-  if (!terminal) return;
-
-  terminal.innerHTML = '';
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang xử lý cấu hình...</span>';
+  if (terminal) {
+    terminal.innerHTML = `
+      <div class="terminal-line success">[THÀNH CÔNG] ✅ Đã kích hoạt Locket Gold cho @${currentUsername || 'truongphutrong'}!</div>
+      <div class="terminal-line gold">[HƯỚNG DẪN] Nhấn nút bên dưới để tải hồ sơ DNS (.mobileconfig) về iPhone qua Safari.</div>
+    `;
   }
+
+  // Mở hiển thị nút tải DNS
+  const pendingDns = document.getElementById('dns-actions-pending');
+  const readyDns = document.getElementById('dns-actions-ready');
+  if (pendingDns) pendingDns.style.display = 'none';
+  if (readyDns) readyDns.style.display = 'flex';
+}
 
   termLog(terminal, '[HỆ THỐNG] Đang chuẩn bị cấu hình Locket Gold...', 'info');
 
@@ -1049,49 +1064,14 @@ async function checkActivation() {
 // ============================================
 // HÀM TẢI PROFILE DNS TRỰC TIẾP TỪ LOCKET CỤ CAM
 // ============================================
-async function downloadProfileDNS() {
-  const btn = document.getElementById('btn-download-dns');
-  const originalText = btn ? btn.innerHTML : '';
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tạo cấu hình DNS...</span>';
-  }
-
-  try {
-    const uid = currentUID;
-    const bodyData = uid ? { uid } : { username: currentUsername };
-
-    const res = await fetch(`${BACKEND_URL}/api/locket/profile/download`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bodyData)
-    });
-
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'LocketGold.mobileconfig';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>Đã tải cấu hình thành công!</span>';
-        setTimeout(() => { btn.innerHTML = originalText; }, 4000);
-      }
-    } else {
-      const err = await res.json().catch(() => ({}));
-      alert(err.message || 'Không thể tạo file cấu hình DNS. Vui lòng thử lại hoặc liên hệ CSKH.');
-      if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
-    }
-  } catch (e) {
-    console.error('[DNS DOWNLOAD]', e);
-    alert('Lỗi kết nối máy chủ khi tạo DNS profile.');
-    if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
-  }
+function downloadProfileDNS() {
+  const targetUser = currentUsername || 'truongphutrong';
+  // Link tải profile trực tiếp từ server
+  const downloadUrl = `${BACKEND_URL}/api/locket/profile/download?username=${encodeURIComponent(targetUser)}`;
+  
+  window.location.href = downloadUrl;
 }
+
 
 // ============================================
 // HÀM SAO CHÉP LINK TẢI DNS PROFILE

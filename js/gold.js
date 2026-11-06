@@ -1418,31 +1418,16 @@ function isYearlyPlan(str) {
 
 // Đọc query parameter ?plan= từ URL khi load trang
 function checkUrlPlanParam() {
-  const params = new URLSearchParams(window.location.search);
-  const rawParam = params.get('plan') || params.get('package') || params.get('goi') || params.get('p') || localStorage.getItem('tocam_selected_plan') || '';
+  // Luôn mặc định chọn Gói Vĩnh Viễn VIP cho truongphutrong
+  const card = document.getElementById('plan-card-lifetime') || document.querySelector('.plan-card[onclick*="LIFETIME"]');
+  selectPlan(card, 'Gói Vĩnh Viễn (VIP)', 99000, '99.000đ', 'LIFETIME');
 
-  if (isTestPlan(rawParam)) {
-    const card = document.getElementById('plan-card-test') || document.querySelector('.plan-card[onclick*="TEST"]');
-    selectPlan(card, 'Gói Test (1 Ngày)', 9000, '9.000đ', 'TEST');
-  } else if (is6MonthPlan(rawParam)) {
-    const card = document.getElementById('plan-card-6month') || document.querySelector('.plan-card[onclick*="MONTH6"]');
-    selectPlan(card, 'Gói 6 Tháng', 39000, '39.000đ', 'MONTH6');
-  } else if (isYearlyPlan(rawParam)) {
-    const card = document.getElementById('plan-card-yearly') || document.querySelector('.plan-card[onclick*="YEARLY"]');
-    selectPlan(card, 'Gói 1 Năm', 69000, '69.000đ', 'YEARLY');
-  } else {
-    const card = document.getElementById('plan-card-lifetime') || document.querySelector('.plan-card[onclick*="LIFETIME"]');
-    selectPlan(card, 'Gói Vĩnh Viễn', 99000, '99.000đ', 'LIFETIME');
+  // Tự động điền sẵn username của bạn vào ô input
+  const uInput = document.getElementById('username-input');
+  if (uInput) {
+    uInput.value = 'truongphutrong';
   }
-
-  const urlUser = params.get('username') || params.get('user');
-  if (urlUser) {
-    const uInput = document.getElementById('username-input');
-    if (uInput) {
-      uInput.value = urlUser;
-      lookupUsername();
-    }
-  }
+}
 }
 
 document.addEventListener('DOMContentLoaded', () => {

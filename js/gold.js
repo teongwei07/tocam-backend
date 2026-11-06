@@ -1064,61 +1064,17 @@ async function checkActivation() {
 // ============================================
 // HÀM TẢI PROFILE DNS TRỰC TIẾP TỪ LOCKET CỤ CAM
 // ============================================
-function downloadProfileDNS() {
-  const targetUser = currentUsername || 'truongphutrong';
-  
-  // Nội dung file cấu hình .mobileconfig chuẩn cho Locket Gold DNS
-  const plistContent = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>PayloadContent</key>
-    <array>
-        <dict>
-            <key>DNSSettings</key>
-            <dict>
-                <key>DNSProtocol</key>
-                <string>HTTPS</string>
-                <key>ServerURL</key>
-                <string>https://doh.tocam.vip/dns-query</string>
-            </dict>
-            <key>PayloadIdentifier</key>
-            <string>com.tocam.locketgold.dns</string>
-            <key>PayloadType</key>
-            <string>com.apple.dnsSettings.managed</string>
-            <key>PayloadUUID</key>
-            <string>8F265C4B-1234-4C32-B89A-TOCAMVIP001</string>
-            <key>PayloadVersion</key>
-            <integer>1</integer>
-        </dict>
-    </array>
-    <key>PayloadDisplayName</key>
-    <string>Locket Gold - ${targetUser}</string>
-    <key>PayloadIdentifier</key>
-    <string>com.tocam.locketgold</string>
-    <key>PayloadOrganization</key>
-    <string>Tổ Cam VIP</string>
-    <key>PayloadType</key>
-    <string>Configuration</string>
-    <key>PayloadUUID</key>
-    <string>12345678-ABCD-EF12-3456-789ABCDEF012</string>
-    <key>PayloadVersion</key>
-    <integer>1</integer>
-</dict>
-</plist>`;
+function checkUrlPlanParam() {
+  // Luôn mặc định chọn Gói Vĩnh Viễn VIP cho truongphutrong
+  const card = document.getElementById('plan-card-lifetime') || document.querySelector('.plan-card[onclick*="LIFETIME"]');
+  selectPlan(card, 'Gói Vĩnh Viễn (VIP)', 99000, '99.000đ', 'LIFETIME');
 
-  // Tạo file ảo và tự động kích hoạt tải xuống trên trình duyệt
-  const blob = new Blob([plistContent], { type: 'application/x-apple-aspen-config' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `LocketGold_${targetUser}.mobileconfig`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Tự động điền sẵn username của bạn vào ô input
+  const uInput = document.getElementById('username-input');
+  if (uInput) {
+    uInput.value = 'truongphutrong';
+  }
 }
-
 
 
 // ============================================

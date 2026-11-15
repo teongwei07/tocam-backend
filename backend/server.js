@@ -1,8 +1,8 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (FINAL FULL PRODUCTION)
- * - Bypass payment: Tự động kích hoạt Vĩnh Viễn.
- * - Hỗ trợ tải profile .mobileconfig đầy đủ Root CA từ Cụ Cam.
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (REAL UID & ROOT CA FIX)
+ * - Tự động lấy UID thật từ Cụ Cam API khi tra cứu.
+ * - Tải file .mobileconfig chính hãng (Có sẵn LocketProxy CA & DNS).
  * ============================================================
  */
 
@@ -20,7 +20,6 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Chống cache tĩnh trên trình duyệt
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   next();
@@ -46,7 +45,7 @@ const CONFIG = {
     MONTH6: 'LKG6M',
     '6MONTH': 'LKG6M',
     YEARLY: 'LKG1Y',
-    LIFETIME: 'LKGVV'
+    LIFETIME: 'LKGVV' // Gói Vĩnh Viễn
   },
   LOCKET_SECRET_KEY: process.env.LOCKET_SECRET_KEY || 'sk_a6f8887c53d6baa3f90a7929e85b693b7dddc82bfd4ecfb233efa75dd7551df7',
   LOCKET_API_BASE: process.env.LOCKET_API_BASE || 'https://locket.2707226.xyz',
@@ -160,7 +159,7 @@ function saveUser(userData) {
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 
-// Helper gọi Locket API hỗ trợ nhận buffer file hoặc JSON
+// Helper gọi Locket API
 function locketRequest(method, path, body = null) {
   return new Promise((resolve, reject) => {
     if (!CONFIG.LOCKET_SECRET_KEY) return reject(new Error('LOCKET_SECRET_KEY chưa cấu hình'));
@@ -206,25 +205,51 @@ function locketRequest(method, path, body = null) {
   });
 }
 
+// Helper: Tự động lấy UID THẬT từ Cụ Cam API
+async function getOrRegisterRealUid(username) {
+  if (!CONFIG.LOCKET_SECRET_KEY) return `bypass_uid_${username}`;
+  try {
+    // 1. Kiểm tra xem user đã có UID trên Cụ Cam chưa
+    const checkRes = await locketRequest('GET', `/api/uid/check?username=${encodeURIComponent(username)}`);
+    if (checkRes.statusCode === 200 && checkRes.data) {
+      const d = checkRes.data.data || checkRes.data;
+      const realUid = d?.uid?.uidString || d?.uid || null;
+      if (realUid) return realUid;
+    }
+
+    // 2. Nếu chưa có, tiến hành tạo mới gói Vĩnh Viễn (LKGVV) để lấy UID thật
+    const createRes = await locketRequest('POST', '/api/uid/create', {
+      username: username,
+      packageCode: CONFIG.LOCKET_PACKAGE_CODES.LIFETIME
+    });
+    if (createRes.statusCode === 200 || createRes.statusCode === 201) {
+      const rawData = createRes.data?.data || createRes.data;
+      const uidString = rawData?.uid?.uidString || rawData?.uid?.uid || rawData?.uid || rawData?.uidString || null;
+      if (uidString) {
+        return typeof uidString === 'string' ? uidString : uidString?.uidString;
+      }
+    }
+  } catch (e) {
+    console.error('[REAL_UID] Lỗi lấy UID thật:', e.message);
+  }
+  return `bypass_uid_${username}`;
+}
+
 // =============================================
 // HEALTH CHECK
 // =============================================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'TỔ CAM Backend (Production)', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'TỔ CAM Backend (Real UID Mode)', time: new Date().toISOString() });
 });
 
-// =============================================
-// API KIỂM TRA THANH TOÁN (BYPASS)
-// =============================================
 app.get('/check-payment', (req, res) => {
   const raw = (req.query.username || '').toLowerCase().trim().replace('@', '');
   const username = resolveCanonicalUsername(raw);
 
   if (!username) return res.status(400).json({ error: 'Thiếu username' });
 
-  const record = {
+  res.json({
     paid: true,
-    consumed: false,
     plan: 'LIFETIME',
     amount: 0,
     paidAt: new Date().toISOString(),
@@ -232,60 +257,23 @@ app.get('/check-payment', (req, res) => {
     locketStatus: 'success',
     uid: null,
     expiresAt: 'Vĩnh Viễn'
-  };
-  paymentStore.set(username, record);
-
-  res.json({
-    paid: true,
-    plan: 'LIFETIME',
-    amount: 0,
-    paidAt: record.paidAt,
-    username,
-    locketStatus: 'success',
-    uid: null,
-    expiresAt: 'Vĩnh Viễn'
   });
 });
 
-// =============================================
-// PROXY: KIỂM TRA USERNAME LOCKET
-// =============================================
 app.get('/api/locket/uid/check', async (req, res) => {
   const rawUser = (req.query.username || '').trim().replace('@', '');
   const username = cleanLocketUsername(rawUser);
 
   if (!username) return res.status(400).json({ ok: false, message: 'Thiếu username' });
 
-  if (CONFIG.LOCKET_SECRET_KEY) {
-    try {
-      const result = await locketRequest('GET', `/api/uid/check?username=${encodeURIComponent(username)}`);
-      if (result.statusCode === 200 && result.data) {
-        const d = result.data.data || result.data;
-        const verifiedUid = d?.uid?.uidString || d?.uid || null;
-        const verifiedUser = d?.username || username;
-
-        return res.json({
-          ok: true,
-          found: true,
-          data: {
-            username: verifiedUser,
-            uid: verifiedUid,
-            avatarUrl: d?.avatarUrl || null,
-            active: true,
-            status: 'ACTIVE',
-            expiresAt: 'Vĩnh Viễn'
-          }
-        });
-      }
-    } catch (e) {}
-  }
+  const realUid = await getOrRegisterRealUid(username);
 
   res.json({
     ok: true,
     found: true,
     data: {
       username: username,
-      uid: `bypass_uid_${username}`,
+      uid: realUid,
       avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=FFA033&color=fff&size=128&bold=true`,
       active: true,
       status: 'ACTIVE',
@@ -294,9 +282,6 @@ app.get('/api/locket/uid/check', async (req, res) => {
   });
 });
 
-// =============================================
-// API TỰ ĐỘNG KÍCH HOẠT LOCKET GOLD
-// =============================================
 app.post('/api/activate', async (req, res) => {
   const { username } = req.body || {};
   const rawU = (username || '').toLowerCase().trim().replace('@', '');
@@ -304,81 +289,36 @@ app.post('/api/activate', async (req, res) => {
 
   if (!u) return res.status(400).json({ ok: false, message: 'Thiếu username' });
 
-  const targetPlan = 'LIFETIME';
-  const packageCode = CONFIG.LOCKET_PACKAGE_CODES[targetPlan] || 'LKGVV';
-
-  let finalUid = `bypass_uid_${u}`;
-  let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(u)}&background=FFA033&color=fff&size=128&bold=true`;
-
-  if (CONFIG.LOCKET_SECRET_KEY) {
-    try {
-      const result = await locketRequest('POST', '/api/uid/create', {
-        username: u,
-        packageCode: packageCode
-      });
-      if (result.statusCode === 200 || result.statusCode === 201) {
-        const rawData = result.data?.data || result.data;
-        const uidString = rawData?.uid?.uidString || rawData?.uid?.uid || rawData?.uid || rawData?.uidString || null;
-        if (uidString) finalUid = typeof uidString === 'string' ? uidString : uidString?.uidString;
-        if (rawData?.avatarUrl) avatarUrl = rawData.avatarUrl;
-      }
-    } catch (err) {
-      console.error('[ACTIVATE] Lỗi gọi Locket API:', err.message);
-    }
-  }
-
-  const record = {
-    paid: true,
-    consumed: true,
-    plan: targetPlan,
-    amount: 0,
-    txId: `bypass_${Date.now()}`,
-    paidAt: new Date().toISOString(),
-    username: u,
-    locketStatus: 'success',
-    uid: finalUid,
-    expiresAt: 'Vĩnh Viễn'
-  };
-  paymentStore.set(u, record);
+  const realUid = await getOrRegisterRealUid(u);
 
   saveUser({
     username: u,
-    uid: finalUid,
-    currentPlan: targetPlan,
+    uid: realUid,
+    currentPlan: 'LIFETIME',
     status: 'ACTIVE',
     expiresAt: 'Vĩnh Viễn',
-    avatarUrl: avatarUrl,
+    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(u)}&background=FFA033&color=fff&size=128&bold=true`,
     lastRenewedAt: new Date().toISOString(),
     newHistoryItem: {
-      txId: record.txId,
-      plan: targetPlan,
+      txId: `bypass_${Date.now()}`,
+      plan: 'LIFETIME',
       amount: 0,
       time: new Date().toISOString(),
       status: 'success'
     }
   });
 
-  saveTransactionToHistory({
-    username: u,
-    plan: targetPlan,
-    amount: 0,
-    time: new Date().toISOString(),
-    txId: record.txId,
-    status: 'success',
-    avatarUrl: avatarUrl
-  });
-
   return res.json({
     ok: true,
     message: 'Đã kích hoạt Locket Gold Vĩnh Viễn thành công!',
-    uid: finalUid,
+    uid: realUid,
     expiresAt: 'Vĩnh Viễn',
-    plan: targetPlan
+    plan: 'LIFETIME'
   });
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG (CÓ ROOT CA & CÁ NHÂN HÓA)
+// PROXY: TẢI FILE MOBILECONFIG CHÍNH HÃNG (CÓ ROOT CA)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -389,91 +329,36 @@ app.all('/api/locket/profile/download', async (req, res) => {
   const cleanUsername = username ? cleanLocketUsername(username) : '';
   let resolvedUid = uid;
 
-  if (!resolvedUid && cleanUsername && CONFIG.LOCKET_SECRET_KEY) {
-    try {
-      const checkResult = await locketRequest('GET', `/api/uid/check?username=${encodeURIComponent(cleanUsername)}`);
-      if (checkResult.statusCode === 200 && checkResult.data) {
-        const d = checkResult.data.data || checkResult.data;
-        resolvedUid = d?.uid?.uidString || d?.uid || null;
-      }
-    } catch (e) {}
+  // Lấy UID thật từ Cụ Cam nếu chưa có
+  if (!resolvedUid && cleanUsername) {
+    resolvedUid = await getOrRegisterRealUid(cleanUsername);
   }
 
   if (!resolvedUid) resolvedUid = `bypass_uid_${cleanUsername || 'user'}`;
 
-  // 1. Thử lấy file profile gốc trực tiếp từ các endpoint của Cụ Cam API
+  // GỌI TRỰC TIẾP API CỤ CAM ĐỂ LẤY FILE PROFILE GỐC (CHỨA ROOT CA & DNS)
   if (CONFIG.LOCKET_SECRET_KEY) {
     try {
-      const endpoints = [
-        { method: 'POST', path: '/api/profile/custom', body: { uid: resolvedUid, username: cleanUsername } },
-        { method: 'GET', path: `/api/profile/download?uid=${encodeURIComponent(resolvedUid)}&username=${encodeURIComponent(cleanUsername)}` },
-        { method: 'POST', path: '/api/uid/profile', body: { uid: resolvedUid, username: cleanUsername } }
-      ];
+      console.log(`[PROFILE] Đang yêu cầu tải file .mobileconfig từ Cụ Cam cho UID: ${resolvedUid}`);
+      const result = await locketRequest('POST', '/api/profile/custom', { uid: resolvedUid });
 
-      for (const ep of endpoints) {
-        const result = await locketRequest(ep.method, ep.path, ep.body);
-        if (result.isFile && result.statusCode === 200 && result.buffer && result.buffer.length > 500) {
-          res.setHeader('Content-Type', 'application/x-apple-aspen-config');
-          res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
-          return res.send(result.buffer);
-        }
+      if (result.isFile && result.statusCode === 200 && result.buffer && result.buffer.length > 500) {
+        console.log(`[PROFILE] ✅ Tải file thành công từ Cụ Cam!`);
+        res.setHeader('Content-Type', 'application/x-apple-aspen-config');
+        res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
+        return res.send(result.buffer);
+      } else {
+        console.warn(`[PROFILE] Cụ Cam API trả về không phải file:`, result.data || result.statusCode);
       }
     } catch (e) {
-      console.error('[PROFILE] Lỗi gọi API Cụ Cam:', e.message);
+      console.error('[PROFILE] Lỗi kết nối Cụ Cam lấy profile:', e.message);
     }
   }
 
-  // 2. FALLBACK CHUẨN XÁC NẾU API GỐC BẬN (Giao diện hiển thị đúng tên và cấu hình DNS DoH)
-  const fallbackConfig = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>PayloadContent</key>
-	<array>
-		<dict>
-			<key>PayloadDescription</key>
-			<string>Cấu hình DNS Locket Gold cho @${cleanUsername || 'user'}</string>
-			<key>PayloadDisplayName</key>
-			<string>Locket VIP Filter DNS</string>
-			<key>PayloadIdentifier</key>
-			<string>com.tocam.${cleanUsername || 'user'}.dns</string>
-			<key>PayloadType</key>
-			<string>com.apple.dnsSettings.managed</string>
-			<key>PayloadUUID</key>
-			<string>7B9F4E2A-1111-4444-8888-A1B2C3D4E5F6</string>
-			<key>PayloadVersion</key>
-			<integer>1</integer>
-			<key>DNSSettings</key>
-			<dict>
-				<key>ServerAddresses</key>
-				<array>
-					<string>198.18.0.1</string>
-				</array>
-				<key>DNSProtocol</key>
-				<string>HTTPS</string>
-				<key>ServerURL</key>
-				<string>https://dns.nodns.vn/dns-query-vip?u=${encodeURIComponent(resolvedUid)}&amp;t=${encodeURIComponent(cleanUsername)}</string>
-			</dict>
-		</dict>
-	</array>
-	<key>PayloadDescription</key>
-	<string>Cấu hình Locket Gold VIP (Camera Filter) dành riêng cho @${cleanUsername || 'user'}. Cài xong: Cài đặt -> Cài đặt chung -> Giới thiệu -> Cài đặt tin cậy chứng nhận -> Bật LocketProxy CA.</string>
-	<key>PayloadDisplayName</key>
-	<string>Locket Gold VIP [${cleanUsername || 'user'}]</string>
-	<key>PayloadIdentifier</key>
-	<string>com.tocam.profile.${cleanUsername || 'user'}</string>
-	<key>PayloadType</key>
-	<string>Configuration</string>
-	<key>PayloadUUID</key>
-	<string>9C8D7E6F-5432-10FE-DCBA-9876543210AB</string>
-	<key>PayloadVersion</key>
-	<integer>1</integer>
-</dict>
-</plist>`;
-
-  res.setHeader('Content-Type', 'application/x-apple-aspen-config');
-  res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
-  return res.send(Buffer.from(fallbackConfig));
+  return res.status(502).json({
+    ok: false,
+    message: 'Không thể tải cấu hình gốc chứa Root CA từ Cụ Cam. Vui lòng kiểm tra lại LOCKET_SECRET_KEY!'
+  });
 });
 
 // =============================================
@@ -488,32 +373,37 @@ app.post('/api/user/lookup', async (req, res) => {
     return res.status(400).json({ ok: false, message: 'Vui lòng nhập Username Locket hợp lệ!' });
   }
 
-  let users = loadUsers();
-  let user = users[u];
+  // Lấy hoặc đăng ký UID thật từ Cụ Cam API ngay khi tra cứu
+  const realUid = await getOrRegisterRealUid(u);
 
-  if (!user) {
-    user = saveUser({
-      username: u,
-      uid: `bypass_uid_${u}`,
-      currentPlan: 'LIFETIME',
-      status: 'ACTIVE',
-      expiresAt: 'Vĩnh Viễn',
-      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(u)}&background=FFA033&color=fff&size=128&bold=true`,
-      createdAt: new Date().toISOString(),
-      lastRenewedAt: new Date().toISOString(),
-      history: [{
-        txId: `bypass_${Date.now()}`,
-        plan: 'LIFETIME',
-        amount: 0,
-        time: new Date().toISOString(),
-        status: 'success'
-      }]
-    });
+  let users = loadUsers();
+  let user = users[u] || saveUser({
+    username: u,
+    uid: realUid,
+    currentPlan: 'LIFETIME',
+    status: 'ACTIVE',
+    expiresAt: 'Vĩnh Viễn',
+    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(u)}&background=FFA033&color=fff&size=128&bold=true`,
+    createdAt: new Date().toISOString(),
+    lastRenewedAt: new Date().toISOString(),
+    history: [{
+      txId: `bypass_${Date.now()}`,
+      plan: 'LIFETIME',
+      amount: 0,
+      time: new Date().toISOString(),
+      status: 'success'
+    }]
+  });
+
+  // Đảm bảo cập nhật UID thật nếu trước đó lưu UID giả
+  if (user.uid && user.uid.startsWith('bypass_uid_') && !realUid.startsWith('bypass_uid_')) {
+    user.uid = realUid;
+    saveUser(user);
   }
 
   const host = req.get('host') || 'localhost:3000';
   const protocol = req.protocol || 'http';
-  const dnsDownloadUrl = `${protocol}://${host}/api/locket/profile/download?username=${encodeURIComponent(u)}&uid=${encodeURIComponent(user.uid || '')}`;
+  const dnsDownloadUrl = `${protocol}://${host}/api/locket/profile/download?username=${encodeURIComponent(u)}&uid=${encodeURIComponent(user.uid || realUid)}`;
 
   return res.json({
     ok: true,
@@ -521,7 +411,7 @@ app.post('/api/user/lookup', async (req, res) => {
       username: user.username,
       avatarUrl: user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u)}&background=FFA033&color=fff&size=128&bold=true`,
       hasPin: false,
-      uid: user.uid,
+      uid: user.uid || realUid,
       status: 'ACTIVE',
       currentPlan: 'LIFETIME',
       expiresAt: 'Vĩnh Viễn',
@@ -544,7 +434,7 @@ app.get('/api/recent-transactions', (req, res) => {
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - FINAL PRODUCTION ONLINE
+   TỔ CAM Payment Backend - REAL UID MODE ONLINE
    Port: ${CONFIG.PORT}
 ====================================================
   `);

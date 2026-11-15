@@ -1,8 +1,8 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (SELF-CONTAINED PRODUCTION)
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (CLEAN PRODUCTION READY)
  * - Bypass thanh toán: Tự động kích hoạt gói Vĩnh Viễn.
- * - Tự động sinh tệp .mobileconfig cá nhân hóa (Gồm đầy đủ DNS & LocketProxy CA).
+ * - Tự động sinh tệp .mobileconfig cá nhân hóa chuẩn chỉnh (DNS DoH riêng biệt cho từng user).
  * ============================================================
  */
 
@@ -87,35 +87,6 @@ function loadSavedTransactions() {
     }
   } catch (e) {}
   return [];
-}
-
-function saveTransactionToHistory(txItem) {
-  try {
-    const list = loadSavedTransactions();
-    const cleanUser = (txItem.username || '').toLowerCase().trim().replace('@', '');
-    if (!cleanUser) return list;
-
-    const existingIndex = list.findIndex(item => (item.username || '').toLowerCase().trim() === cleanUser);
-    const newItem = {
-      username: cleanUser,
-      plan: txItem.plan || 'LIFETIME',
-      amount: 0,
-      time: txItem.time || new Date().toISOString(),
-      txId: txItem.txId || `bypass_${Date.now()}`,
-      status: 'success',
-      avatarUrl: txItem.avatarUrl || null
-    };
-
-    if (existingIndex !== -1) {
-      list[existingIndex] = { ...list[existingIndex], ...newItem };
-    } else {
-      list.unshift(newItem);
-    }
-    fs.writeFileSync(TX_FILE, JSON.stringify(list.slice(0, 100), null, 2), 'utf-8');
-    return list;
-  } catch (e) {
-    return [];
-  }
 }
 
 function loadUsers() {
@@ -231,7 +202,7 @@ async function getOrRegisterRealUid(username) {
 // HEALTH CHECK & API
 // =============================================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'TỔ CAM Backend (Self-Contained Mode)', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'TỔ CAM Backend (Clean Profile Production)', time: new Date().toISOString() });
 });
 
 app.get('/check-payment', (req, res) => {
@@ -305,7 +276,7 @@ app.post('/api/activate', async (req, res) => {
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG (CÁ NHÂN HÓA HOÀN CHỈNH)
+// PROXY: TẢI FILE MOBILECONFIG (CHUẨN CHỈNH SẠCH SẼ, KHÔNG LỖI CHỨNG NHẬN)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -320,8 +291,8 @@ app.all('/api/locket/profile/download', async (req, res) => {
   }
   if (!resolvedUid) resolvedUid = `bypass_uid_${cleanUsername || 'user'}`;
 
-  // Tệp cấu hình .mobileconfig hoàn chỉnh chứa cấu hình DNS DoH cá nhân hóa và khối LocketProxy CA
-  const selfContainedProfile = `<?xml version="1.0" encoding="UTF-8"?>
+  // Tệp cấu hình chuẩn sạch quản lý DNS DoH cá nhân hóa
+  const cleanProfileConfig = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -352,29 +323,9 @@ app.all('/api/locket/profile/download', async (req, res) => {
 				<string>https://dns.nodns.vn/dns-query-vip?u=${encodeURIComponent(resolvedUid)}&amp;t=${encodeURIComponent(cleanUsername)}</string>
 			</dict>
 		</dict>
-		<dict>
-			<key>PayloadCertificateFileName</key>
-			<string>LocketProxyCA.cer</string>
-			<key>PayloadContent</key>
-			<data>
-			MIIFazCCA1OgAwIBAgIUW1... (LocketProxy Root CA Certificate Payload) ...
-			</data>
-			<key>PayloadDescription</key>
-			<string>Thêm chứng chỉ LocketProxy CA</string>
-			<key>PayloadDisplayName</key>
-			<string>LocketProxy CA</string>
-			<key>PayloadIdentifier</key>
-			<string>com.tocam.locketproxy.ca</string>
-			<key>PayloadType</key>
-			<string>com.apple.security.root</string>
-			<key>PayloadUUID</key>
-			<string>1C2D3E4F-5678-90AB-CDEF-1234567890AB</string>
-			<key>PayloadVersion</key>
-			<integer>1</integer>
-		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>Cấu hình Locket Gold VIP (Camera Filter) dành riêng cho @${cleanUsername || 'user'}. Cài xong: Cài đặt -> Cài đặt chung -> Giới thiệu -> Cài đặt tin cậy chứng nhận -> Bật LocketProxy CA.</string>
+	<string>Cấu hình Locket Gold VIP (Camera Filter) dành riêng cho @${cleanUsername || 'user'}.</string>
 	<key>PayloadDisplayName</key>
 	<string>Locket Gold VIP [${cleanUsername || 'user'}]</string>
 	<key>PayloadIdentifier</key>
@@ -390,7 +341,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
 
   res.setHeader('Content-Type', 'application/x-apple-aspen-config');
   res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
-  return res.send(Buffer.from(selfContainedProfile));
+  return res.send(Buffer.from(cleanProfileConfig));
 });
 
 // =============================================
@@ -458,7 +409,7 @@ app.get('/api/recent-transactions', (req, res) => {
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - SELF-CONTAINED ONLINE
+   TỔ CAM Payment Backend - CLEAN PRODUCTION ONLINE
    Port: ${CONFIG.PORT}
 ====================================================
   `);

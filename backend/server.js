@@ -1,8 +1,8 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (PERSONALIZED PROFILE MODE)
- * - Tự động gọi API Cụ Cam lấy file .mobileconfig chuẩn cá nhân hóa.
- * - Hiển thị đúng tên user, chứng chỉ LocketProxy CA và DoH riêng biệt.
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (FINAL FULL PRODUCTION)
+ * - Bypass payment: Tự động kích hoạt Vĩnh Viễn.
+ * - Hỗ trợ tải profile .mobileconfig đầy đủ Root CA từ Cụ Cam.
  * ============================================================
  */
 
@@ -40,13 +40,7 @@ app.use((err, req, res, next) => {
 // =============================================
 const CONFIG = {
   PORT: process.env.PORT || 3000,
-  PLAN_PRICES: {
-    TEST: 0,
-    MONTH6: 0,
-    '6MONTH': 0,
-    YEARLY: 0,
-    LIFETIME: 0
-  },
+  PLAN_PRICES: { TEST: 0, MONTH6: 0, '6MONTH': 0, YEARLY: 0, LIFETIME: 0 },
   LOCKET_PACKAGE_CODES: {
     TEST: 'LKGT3D',
     MONTH6: 'LKG6M',
@@ -166,7 +160,7 @@ function saveUser(userData) {
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 
-// Helper gọi Locket API hỗ trợ trả về buffer (file .mobileconfig) hoặc JSON
+// Helper gọi Locket API hỗ trợ nhận buffer file hoặc JSON
 function locketRequest(method, path, body = null) {
   return new Promise((resolve, reject) => {
     if (!CONFIG.LOCKET_SECRET_KEY) return reject(new Error('LOCKET_SECRET_KEY chưa cấu hình'));
@@ -216,11 +210,11 @@ function locketRequest(method, path, body = null) {
 // HEALTH CHECK
 // =============================================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'TỔ CAM Backend (Personalized Profile Mode)', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'TỔ CAM Backend (Production)', time: new Date().toISOString() });
 });
 
 // =============================================
-// API KIỂM TRA THANH TOÁN
+// API KIỂM TRA THANH TOÁN (BYPASS)
 // =============================================
 app.get('/check-payment', (req, res) => {
   const raw = (req.query.username || '').toLowerCase().trim().replace('@', '');
@@ -384,7 +378,7 @@ app.post('/api/activate', async (req, res) => {
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG CÁ NHÂN HÓA TỪ CỤ CAM API
+// PROXY: TẢI FILE MOBILECONFIG (CÓ ROOT CA & CÁ NHÂN HÓA)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -395,7 +389,6 @@ app.all('/api/locket/profile/download', async (req, res) => {
   const cleanUsername = username ? cleanLocketUsername(username) : '';
   let resolvedUid = uid;
 
-  // 1. Nếu chưa có UID, tiến hành gọi API check username để lấy UID chính xác từ Cụ Cam
   if (!resolvedUid && cleanUsername && CONFIG.LOCKET_SECRET_KEY) {
     try {
       const checkResult = await locketRequest('GET', `/api/uid/check?username=${encodeURIComponent(cleanUsername)}`);
@@ -408,10 +401,9 @@ app.all('/api/locket/profile/download', async (req, res) => {
 
   if (!resolvedUid) resolvedUid = `bypass_uid_${cleanUsername || 'user'}`;
 
-  // 2. GỌI TRỰC TIẾP API CỤ CAM ĐỂ LẤY FILE .MOBILECONFIG CÁ NHÂN HÓA (Đúng tên user & chứng chỉ CA)
+  // 1. Thử lấy file profile gốc trực tiếp từ các endpoint của Cụ Cam API
   if (CONFIG.LOCKET_SECRET_KEY) {
     try {
-      // Thử các endpoint tạo profile phổ biến của hệ thống Cụ Cam
       const endpoints = [
         { method: 'POST', path: '/api/profile/custom', body: { uid: resolvedUid, username: cleanUsername } },
         { method: 'GET', path: `/api/profile/download?uid=${encodeURIComponent(resolvedUid)}&username=${encodeURIComponent(cleanUsername)}` },
@@ -422,18 +414,17 @@ app.all('/api/locket/profile/download', async (req, res) => {
         const result = await locketRequest(ep.method, ep.path, ep.body);
         if (result.isFile && result.statusCode === 200 && result.buffer && result.buffer.length > 500) {
           res.setHeader('Content-Type', 'application/x-apple-aspen-config');
-          // Cá nhân hóa tên file tải về theo đúng username của người dùng
           res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
           return res.send(result.buffer);
         }
       }
     } catch (e) {
-      console.error('[PROFILE] Lỗi khi lấy profile từ Cụ Cam API:', e.message);
+      console.error('[PROFILE] Lỗi gọi API Cụ Cam:', e.message);
     }
   }
 
-  // 3. FALLBACK CÁ NHÂN HÓA ĐỘNG: Nếu API Cụ Cam bận, tự động sinh file plist nhúng thẳng UID/Username và tên hiển thị động
-  const personalizedConfig = `<?xml version="1.0" encoding="UTF-8"?>
+  // 2. FALLBACK CHUẨN XÁC NẾU API GỐC BẬN (Giao diện hiển thị đúng tên và cấu hình DNS DoH)
+  const fallbackConfig = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -441,7 +432,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
 	<array>
 		<dict>
 			<key>PayloadDescription</key>
-			<string>Cấu hình Locket Gold VIP cho @${cleanUsername || 'user'}</string>
+			<string>Cấu hình DNS Locket Gold cho @${cleanUsername || 'user'}</string>
 			<key>PayloadDisplayName</key>
 			<string>Locket VIP Filter DNS</string>
 			<key>PayloadIdentifier</key>
@@ -482,7 +473,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
 
   res.setHeader('Content-Type', 'application/x-apple-aspen-config');
   res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
-  return res.send(Buffer.from(personalizedConfig));
+  return res.send(Buffer.from(fallbackConfig));
 });
 
 // =============================================
@@ -553,9 +544,8 @@ app.get('/api/recent-transactions', (req, res) => {
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - PERSONALIZED PROFILE MODE
+   TỔ CAM Payment Backend - FINAL PRODUCTION ONLINE
    Port: ${CONFIG.PORT}
-   Trạng thái: Đã đồng bộ cá nhân hóa tên user trên mobileconfig.
 ====================================================
   `);
 });

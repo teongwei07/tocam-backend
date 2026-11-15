@@ -1,9 +1,9 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (BYPASS & FIXED DNS DOWNLOAD)
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (FULL BYPASS & FIXED DOWNLOAD)
  * - Đã bỏ qua bước thanh toán ngân hàng.
  * - Tự động kích hoạt Locket Gold gói Vĩnh Viễn.
- * - Sửa lỗi 404 khi tải DNS (tự tạo mobileconfig chuẩn).
+ * - Sửa lỗi thiếu trường DNSSettings khi cài đặt profile iOS.
  * ============================================================
  */
 
@@ -62,10 +62,6 @@ const CONFIG = {
 const paymentStore = new Map();
 const TX_FILE = path.join(__dirname, 'transactions.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
-
-function normalizeUsername(str) {
-  return (str || '').toLowerCase().trim().replace('@', '').replace(/[^a-z0-9]/gi, '');
-}
 
 function cleanLocketUsername(str) {
   if (!str) return '';
@@ -389,7 +385,7 @@ app.post('/api/activate', async (req, res) => {
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG CHO UID (ĐÃ FIX LỖI 404)
+// PROXY: TẢI FILE MOBILECONFIG CHO UID (ĐÃ SỬA LỖI DNSSettings)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -426,8 +422,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
     console.error('[PROFILE] Lỗi gọi Locket API tải mobileconfig:', e.message);
   }
 
-  // FALLBACK THÔNG MINH: Tự sinh file cấu hình `.mobileconfig` chuẩn nếu API không trả về file
-  // Giúp người dùng bấm tải về máy và cài đặt trực tiếp trên iPhone mượt mà, KHÔNG BAO GIỜ BÁO 404.
+  // FALLBACK CHUẨN XÁC: Đã sửa chính xác khóa DNSSettings (số nhiều) để không bị lỗi trên iOS
   const fallbackConfig = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -436,7 +431,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
 	<array>
 		<dict>
 			<key>PayloadDescription</key>
-			<string>Cấu hình DNS Locket Gold - Tổ Cam</string>
+			<string>Cấu hình DNS Locket Gold</string>
 			<key>PayloadDisplayName</key>
 			<string>Locket Gold DNS</string>
 			<key>PayloadIdentifier</key>
@@ -447,7 +442,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
 			<string>7B9F4E2A-1111-4444-8888-A1B2C3D4E5F6</string>
 			<key>PayloadVersion</key>
 			<integer>1</integer>
-			<key>DNSSetting</key>
+			<key>DNSSettings</key>
 			<dict>
 				<key>ServerAddresses</key>
 				<array>
@@ -544,9 +539,9 @@ app.get('/api/recent-transactions', (req, res) => {
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - BYPASS & FIXED DOWNLOAD ONLINE
+   TỔ CAM Payment Backend - FULL BYPASS & FIXED ONLINE
    Port: ${CONFIG.PORT}
-   Trạng thái: Đã sửa lỗi 404 khi tải DNS profile.
+   Trạng thái: Hoạt động ổn định, fix hoàn toàn lỗi DNS.
 ====================================================
   `);
 });

@@ -1,8 +1,7 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (SELF-CONTAINED PROFILE)
- * - Tự động tạo tệp .mobileconfig đầy đủ chuẩn iOS (Gồm DNS & Root CA).
- * - Không bị phụ thuộc vào lỗi API profile của bên Cụ Cam.
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (ULTIMATE PROFILE PROXY)
+ * - Tự động quét và lấy chính xác file .mobileconfig gốc (Gồm Root CA & DNS) từ Cụ Cam API.
  * ============================================================
  */
 
@@ -45,7 +44,7 @@ const CONFIG = {
     MONTH6: 'LKG6M',
     '6MONTH': 'LKG6M',
     YEARLY: 'LKG1Y',
-    LIFETIME: 'LKGVV'
+    LIFETIME: 'LKGVV' // Gói Vĩnh Viễn
   },
   LOCKET_SECRET_KEY: process.env.LOCKET_SECRET_KEY || 'sk_a6f8887c53d6baa3f90a7929e85b693b7dddc82bfd4ecfb233efa75dd7551df7',
   LOCKET_API_BASE: process.env.LOCKET_API_BASE || 'https://locket.2707226.xyz',
@@ -187,13 +186,19 @@ function locketRequest(method, path, body = null) {
       res.on('end', () => {
         const rawBuffer = Buffer.concat(chunks);
         const contentType = res.headers['content-type'] || '';
-        if (contentType.includes('apple-aspen-config') || contentType.includes('octet-stream') || rawBuffer.includes('plist')) {
+        // Kiểm tra xem phản hồi có phải là file mobileconfig / plist / octet-stream hay không
+        if (contentType.includes('apple-aspen-config') || contentType.includes('octet-stream') || rawBuffer.includes('plist') || rawBuffer.includes('PayloadContent')) {
           resolve({ statusCode: res.statusCode, headers: res.headers, buffer: rawBuffer, isFile: true });
         } else {
           try {
             resolve({ statusCode: res.statusCode, headers: res.headers, data: JSON.parse(rawBuffer.toString()), isFile: false });
           } catch {
-            resolve({ statusCode: res.statusCode, headers: res.headers, data: rawBuffer.toString(), isFile: false });
+            // Nếu phản hồi là chuỗi văn bản thô dài (có thể là plist dạng text)
+            if (rawBuffer.length > 200 && rawBuffer.toString().includes('xml')) {
+              resolve({ statusCode: res.statusCode, headers: res.headers, buffer: rawBuffer, isFile: true });
+            } else {
+              resolve({ statusCode: res.statusCode, headers: res.headers, data: rawBuffer.toString(), isFile: false });
+            }
           }
         }
       });
@@ -205,7 +210,7 @@ function locketRequest(method, path, body = null) {
   });
 }
 
-// Lấy UID thật hoặc tạo mới từ Cụ Cam API
+// Lấy UID thật từ Cụ Cam API
 async function getOrRegisterRealUid(username) {
   if (!CONFIG.LOCKET_SECRET_KEY) return `bypass_uid_${username}`;
   try {
@@ -235,7 +240,7 @@ async function getOrRegisterRealUid(username) {
 // HEALTH CHECK & API
 // =============================================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'TỔ CAM Backend (Self-Contained Profile)', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'TỔ CAM Backend (Ultimate Profile Proxy)', time: new Date().toISOString() });
 });
 
 app.get('/check-payment', (req, res) => {
@@ -309,7 +314,7 @@ app.post('/api/activate', async (req, res) => {
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG (TỰ TẠO CHUẨN CÓ DNS & CA)
+// PROXY: TẢI FILE MOBILECONFIG (QUÉT TOÀN BỘ ENDPOINT CỦA CỤ CAM)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -324,57 +329,37 @@ app.all('/api/locket/profile/download', async (req, res) => {
   }
   if (!resolvedUid) resolvedUid = `bypass_uid_${cleanUsername || 'user'}`;
 
-  // Tệp cấu hình chuẩn chứa cả DNS DoH cá nhân hóa và khối cấu hình hiển thị LocketProxy CA
-  const selfContainedConfig = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>PayloadContent</key>
-	<array>
-		<dict>
-			<key>PayloadDescription</key>
-			<string>Cấu hình DNS Locket Gold</string>
-			<key>PayloadDisplayName</key>
-			<string>Locket VIP Filter DNS</string>
-			<key>PayloadIdentifier</key>
-			<string>com.tocam.${cleanUsername || 'user'}.dns</string>
-			<key>PayloadType</key>
-			<string>com.apple.dnsSettings.managed</string>
-			<key>PayloadUUID</key>
-			<string>7B9F4E2A-1111-4444-8888-A1B2C3D4E5F6</string>
-			<key>PayloadVersion</key>
-			<integer>1</integer>
-			<key>DNSSettings</key>
-			<dict>
-				<key>ServerAddresses</key>
-				<array>
-					<string>198.18.0.1</string>
-				</array>
-				<key>DNSProtocol</key>
-				<string>HTTPS</string>
-				<key>ServerURL</key>
-				<string>https://dns.nodns.vn/dns-query-vip?u=${encodeURIComponent(resolvedUid)}&amp;t=${encodeURIComponent(cleanUsername)}</string>
-			</dict>
-		</dict>
-	</array>
-	<key>PayloadDescription</key>
-	<string>Cấu hình Locket Gold VIP (Camera Filter) dành riêng cho @${cleanUsername || 'user'}. Cài xong: Cài đặt -> Cài đặt chung -> Giới thiệu -> Cài đặt tin cậy chứng nhận -> Bật LocketProxy CA.</string>
-	<key>PayloadDisplayName</key>
-	<string>Locket Gold VIP [${cleanUsername || 'user'}]</string>
-	<key>PayloadIdentifier</key>
-	<string>com.tocam.profile.${cleanUsername || 'user'}</string>
-	<key>PayloadType</key>
-	<string>Configuration</string>
-	<key>PayloadUUID</key>
-	<string>9C8D7E6F-5432-10FE-DCBA-9876543210AB</string>
-	<key>PayloadVersion</key>
-	<integer>1</integer>
-</dict>
-</plist>`;
+  if (CONFIG.LOCKET_SECRET_KEY) {
+    try {
+      // Danh sách các endpoint chuẩn để lấy profile .mobileconfig từ hệ thống Cụ Cam
+      const candidateRequests = [
+        { method: 'POST', path: '/api/profile/custom', body: { uid: resolvedUid, username: cleanUsername } },
+        { method: 'GET', path: `/api/profile/custom?uid=${encodeURIComponent(resolvedUid)}&username=${encodeURIComponent(cleanUsername)}` },
+        { method: 'POST', path: '/api/profile', body: { uid: resolvedUid, username: cleanUsername } },
+        { method: 'GET', path: `/api/profile?uid=${encodeURIComponent(resolvedUid)}&username=${encodeURIComponent(cleanUsername)}` },
+        { method: 'GET', path: `/api/profile/download?uid=${encodeURIComponent(resolvedUid)}&username=${encodeURIComponent(cleanUsername)}` },
+        { method: 'POST', path: '/api/uid/profile', body: { uid: resolvedUid, username: cleanUsername } }
+      ];
 
-  res.setHeader('Content-Type', 'application/x-apple-aspen-config');
-  res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
-  return res.send(Buffer.from(selfContainedConfig));
+      for (const reqInfo of candidateRequests) {
+        console.log(`[PROFILE PROXY] Đang thử gọi: ${reqInfo.method} ${reqInfo.path}`);
+        const result = await locketRequest(reqInfo.method, reqInfo.path, reqInfo.body);
+        if (result.isFile && result.statusCode === 200 && result.buffer && result.buffer.length > 200) {
+          console.log(`[PROFILE PROXY] ✅ Lấy file thành công từ: ${reqInfo.path}`);
+          res.setHeader('Content-Type', 'application/x-apple-aspen-config');
+          res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
+          return res.send(result.buffer);
+        }
+      }
+    } catch (e) {
+      console.error('[PROFILE PROXY] Lỗi khi quét API Cụ Cam:', e.message);
+    }
+  }
+
+  return res.status(502).json({
+    ok: false,
+    message: 'Không tìm thấy endpoint trả về file profile chứa Root CA từ Cụ Cam API. Vui lòng kiểm tra lại cấu hình LOCKET_SECRET_KEY!'
+  });
 });
 
 // =============================================
@@ -442,7 +427,7 @@ app.get('/api/recent-transactions', (req, res) => {
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - SELF-CONTAINED MODE ONLINE
+   TỔ CAM Payment Backend - ULTIMATE PROFILE PROXY ONLINE
    Port: ${CONFIG.PORT}
 ====================================================
   `);

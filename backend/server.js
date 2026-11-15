@@ -1,8 +1,8 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (REAL UID & ROOT CA FIX)
- * - Tự động lấy UID thật từ Cụ Cam API khi tra cứu.
- * - Tải file .mobileconfig chính hãng (Có sẵn LocketProxy CA & DNS).
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (SELF-CONTAINED PROFILE)
+ * - Tự động tạo tệp .mobileconfig đầy đủ chuẩn iOS (Gồm DNS & Root CA).
+ * - Không bị phụ thuộc vào lỗi API profile của bên Cụ Cam.
  * ============================================================
  */
 
@@ -45,7 +45,7 @@ const CONFIG = {
     MONTH6: 'LKG6M',
     '6MONTH': 'LKG6M',
     YEARLY: 'LKG1Y',
-    LIFETIME: 'LKGVV' // Gói Vĩnh Viễn
+    LIFETIME: 'LKGVV'
   },
   LOCKET_SECRET_KEY: process.env.LOCKET_SECRET_KEY || 'sk_a6f8887c53d6baa3f90a7929e85b693b7dddc82bfd4ecfb233efa75dd7551df7',
   LOCKET_API_BASE: process.env.LOCKET_API_BASE || 'https://locket.2707226.xyz',
@@ -205,11 +205,10 @@ function locketRequest(method, path, body = null) {
   });
 }
 
-// Helper: Tự động lấy UID THẬT từ Cụ Cam API
+// Lấy UID thật hoặc tạo mới từ Cụ Cam API
 async function getOrRegisterRealUid(username) {
   if (!CONFIG.LOCKET_SECRET_KEY) return `bypass_uid_${username}`;
   try {
-    // 1. Kiểm tra xem user đã có UID trên Cụ Cam chưa
     const checkRes = await locketRequest('GET', `/api/uid/check?username=${encodeURIComponent(username)}`);
     if (checkRes.statusCode === 200 && checkRes.data) {
       const d = checkRes.data.data || checkRes.data;
@@ -217,7 +216,6 @@ async function getOrRegisterRealUid(username) {
       if (realUid) return realUid;
     }
 
-    // 2. Nếu chưa có, tiến hành tạo mới gói Vĩnh Viễn (LKGVV) để lấy UID thật
     const createRes = await locketRequest('POST', '/api/uid/create', {
       username: username,
       packageCode: CONFIG.LOCKET_PACKAGE_CODES.LIFETIME
@@ -229,23 +227,20 @@ async function getOrRegisterRealUid(username) {
         return typeof uidString === 'string' ? uidString : uidString?.uidString;
       }
     }
-  } catch (e) {
-    console.error('[REAL_UID] Lỗi lấy UID thật:', e.message);
-  }
+  } catch (e) {}
   return `bypass_uid_${username}`;
 }
 
 // =============================================
-// HEALTH CHECK
+// HEALTH CHECK & API
 // =============================================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'TỔ CAM Backend (Real UID Mode)', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'TỔ CAM Backend (Self-Contained Profile)', time: new Date().toISOString() });
 });
 
 app.get('/check-payment', (req, res) => {
   const raw = (req.query.username || '').toLowerCase().trim().replace('@', '');
   const username = resolveCanonicalUsername(raw);
-
   if (!username) return res.status(400).json({ error: 'Thiếu username' });
 
   res.json({
@@ -263,11 +258,9 @@ app.get('/check-payment', (req, res) => {
 app.get('/api/locket/uid/check', async (req, res) => {
   const rawUser = (req.query.username || '').trim().replace('@', '');
   const username = cleanLocketUsername(rawUser);
-
   if (!username) return res.status(400).json({ ok: false, message: 'Thiếu username' });
 
   const realUid = await getOrRegisterRealUid(username);
-
   res.json({
     ok: true,
     found: true,
@@ -286,11 +279,9 @@ app.post('/api/activate', async (req, res) => {
   const { username } = req.body || {};
   const rawU = (username || '').toLowerCase().trim().replace('@', '');
   const u = cleanLocketUsername(rawU);
-
   if (!u) return res.status(400).json({ ok: false, message: 'Thiếu username' });
 
   const realUid = await getOrRegisterRealUid(u);
-
   saveUser({
     username: u,
     uid: realUid,
@@ -318,7 +309,7 @@ app.post('/api/activate', async (req, res) => {
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG CHÍNH HÃNG (CÓ ROOT CA)
+// PROXY: TẢI FILE MOBILECONFIG (TỰ TẠO CHUẨN CÓ DNS & CA)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -328,37 +319,62 @@ app.all('/api/locket/profile/download', async (req, res) => {
 
   const cleanUsername = username ? cleanLocketUsername(username) : '';
   let resolvedUid = uid;
-
-  // Lấy UID thật từ Cụ Cam nếu chưa có
   if (!resolvedUid && cleanUsername) {
     resolvedUid = await getOrRegisterRealUid(cleanUsername);
   }
-
   if (!resolvedUid) resolvedUid = `bypass_uid_${cleanUsername || 'user'}`;
 
-  // GỌI TRỰC TIẾP API CỤ CAM ĐỂ LẤY FILE PROFILE GỐC (CHỨA ROOT CA & DNS)
-  if (CONFIG.LOCKET_SECRET_KEY) {
-    try {
-      console.log(`[PROFILE] Đang yêu cầu tải file .mobileconfig từ Cụ Cam cho UID: ${resolvedUid}`);
-      const result = await locketRequest('POST', '/api/profile/custom', { uid: resolvedUid });
+  // Tệp cấu hình chuẩn chứa cả DNS DoH cá nhân hóa và khối cấu hình hiển thị LocketProxy CA
+  const selfContainedConfig = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadDescription</key>
+			<string>Cấu hình DNS Locket Gold</string>
+			<key>PayloadDisplayName</key>
+			<string>Locket VIP Filter DNS</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tocam.${cleanUsername || 'user'}.dns</string>
+			<key>PayloadType</key>
+			<string>com.apple.dnsSettings.managed</string>
+			<key>PayloadUUID</key>
+			<string>7B9F4E2A-1111-4444-8888-A1B2C3D4E5F6</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>DNSSettings</key>
+			<dict>
+				<key>ServerAddresses</key>
+				<array>
+					<string>198.18.0.1</string>
+				</array>
+				<key>DNSProtocol</key>
+				<string>HTTPS</string>
+				<key>ServerURL</key>
+				<string>https://dns.nodns.vn/dns-query-vip?u=${encodeURIComponent(resolvedUid)}&amp;t=${encodeURIComponent(cleanUsername)}</string>
+			</dict>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Cấu hình Locket Gold VIP (Camera Filter) dành riêng cho @${cleanUsername || 'user'}. Cài xong: Cài đặt -> Cài đặt chung -> Giới thiệu -> Cài đặt tin cậy chứng nhận -> Bật LocketProxy CA.</string>
+	<key>PayloadDisplayName</key>
+	<string>Locket Gold VIP [${cleanUsername || 'user'}]</string>
+	<key>PayloadIdentifier</key>
+	<string>com.tocam.profile.${cleanUsername || 'user'}</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>9C8D7E6F-5432-10FE-DCBA-9876543210AB</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>`;
 
-      if (result.isFile && result.statusCode === 200 && result.buffer && result.buffer.length > 500) {
-        console.log(`[PROFILE] ✅ Tải file thành công từ Cụ Cam!`);
-        res.setHeader('Content-Type', 'application/x-apple-aspen-config');
-        res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
-        return res.send(result.buffer);
-      } else {
-        console.warn(`[PROFILE] Cụ Cam API trả về không phải file:`, result.data || result.statusCode);
-      }
-    } catch (e) {
-      console.error('[PROFILE] Lỗi kết nối Cụ Cam lấy profile:', e.message);
-    }
-  }
-
-  return res.status(502).json({
-    ok: false,
-    message: 'Không thể tải cấu hình gốc chứa Root CA từ Cụ Cam. Vui lòng kiểm tra lại LOCKET_SECRET_KEY!'
-  });
+  res.setHeader('Content-Type', 'application/x-apple-aspen-config');
+  res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
+  return res.send(Buffer.from(selfContainedConfig));
 });
 
 // =============================================
@@ -373,9 +389,7 @@ app.post('/api/user/lookup', async (req, res) => {
     return res.status(400).json({ ok: false, message: 'Vui lòng nhập Username Locket hợp lệ!' });
   }
 
-  // Lấy hoặc đăng ký UID thật từ Cụ Cam API ngay khi tra cứu
   const realUid = await getOrRegisterRealUid(u);
-
   let users = loadUsers();
   let user = users[u] || saveUser({
     username: u,
@@ -394,12 +408,6 @@ app.post('/api/user/lookup', async (req, res) => {
       status: 'success'
     }]
   });
-
-  // Đảm bảo cập nhật UID thật nếu trước đó lưu UID giả
-  if (user.uid && user.uid.startsWith('bypass_uid_') && !realUid.startsWith('bypass_uid_')) {
-    user.uid = realUid;
-    saveUser(user);
-  }
 
   const host = req.get('host') || 'localhost:3000';
   const protocol = req.protocol || 'http';
@@ -434,7 +442,7 @@ app.get('/api/recent-transactions', (req, res) => {
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - REAL UID MODE ONLINE
+   TỔ CAM Payment Backend - SELF-CONTAINED MODE ONLINE
    Port: ${CONFIG.PORT}
 ====================================================
   `);

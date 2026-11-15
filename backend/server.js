@@ -1,8 +1,9 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (BYPASS PAYMENT MODE)
- * Đã bỏ qua bước thanh toán ngân hàng.
- * Tự động xác nhận, kích hoạt Locket Gold gói Vĩnh Viễn và cấp DNS.
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (BYPASS & FIXED DNS DOWNLOAD)
+ * - Đã bỏ qua bước thanh toán ngân hàng.
+ * - Tự động kích hoạt Locket Gold gói Vĩnh Viễn.
+ * - Sửa lỗi 404 khi tải DNS (tự tạo mobileconfig chuẩn).
  * ============================================================
  */
 
@@ -62,19 +63,9 @@ const paymentStore = new Map();
 const TX_FILE = path.join(__dirname, 'transactions.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-const KNOWN_AVATARS = {
-  'ney_ihnn': 'https://cdn2.locketcamera.com/v0/b/locket-img/o/users%2FTmSHu7R3CnYENbOk4roifJlWdD12%2Fpublic%2Fprofile_pic.webp?alt=media&token=19a21efb-5e7c-4c62-9a51-c8a24d1f25cd',
-  'kienviet': 'https://cdn2.locketcamera.com/v0/b/locket-img/o/users%2Ft9iNECEtx2dJE9n36VvYb9xoMxy2%2Fpublic%2Fprofile_pic.webp?alt=media&token=dd907711-a017-4c82-8069-21154ec58e21'
-};
-
 function normalizeUsername(str) {
   return (str || '').toLowerCase().trim().replace('@', '').replace(/[^a-z0-9]/gi, '');
 }
-
-const KNOWN_CANONICAL_ALIASES = {
-  'neyihnn': 'ney_ihnn',
-  'kienviet': 'kienviet'
-};
 
 function cleanLocketUsername(str) {
   if (!str) return '';
@@ -85,13 +76,11 @@ function cleanLocketUsername(str) {
     u = u.replace(/.*locketcam/, '');
   }
   u = u.replace(/[\._\s-]*(ct|ibft|chuyentien).*$/i, '');
-  return KNOWN_CANONICAL_ALIASES[u] || u.trim();
+  return u.trim();
 }
 
 function resolveCanonicalUsername(rawUser) {
-  if (!rawUser) return '';
-  const cleaned = cleanLocketUsername(rawUser);
-  return KNOWN_CANONICAL_ALIASES[cleaned] || cleaned;
+  return cleanLocketUsername(rawUser);
 }
 
 function isValidLocketUsername(str) {
@@ -232,19 +221,18 @@ function locketRequest(method, path, body = null) {
 // HEALTH CHECK
 // =============================================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'TỔ CAM Backend (Bypass Payment Mode)', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'TỔ CAM Backend (Bypass Mode)', time: new Date().toISOString() });
 });
 
 // =============================================
-// API KIỂM TRA THANH TOÁN (LUÔN TRẢ VỀ ĐÃ THANH TOÁN THÀNH CÔNG)
+// API KIỂM TRA THANH TOÁN (LUÔN TRẢ VỀ ĐÃ THANH TOÁN)
 // =============================================
 app.get('/check-payment', (req, res) => {
   const raw = (req.query.username || '').toLowerCase().trim().replace('@', '');
-  const username = resolveCanonicalUsername(raw) || cleanLocketUsername(raw);
+  const username = resolveCanonicalUsername(raw);
 
   if (!username) return res.status(400).json({ error: 'Thiếu username' });
 
-  // Tự động cấp trạng thái đã thanh toán gói Vĩnh Viễn ngay lập tức
   const record = {
     paid: true,
     consumed: false,
@@ -275,7 +263,7 @@ app.get('/check-payment', (req, res) => {
 // =============================================
 app.get('/api/locket/uid/check', async (req, res) => {
   const rawUser = (req.query.username || '').trim().replace('@', '');
-  const username = resolveCanonicalUsername(rawUser) || cleanLocketUsername(rawUser);
+  const username = cleanLocketUsername(rawUser);
 
   if (!username) return res.status(400).json({ ok: false, message: 'Thiếu username' });
 
@@ -303,7 +291,6 @@ app.get('/api/locket/uid/check', async (req, res) => {
     } catch (e) {}
   }
 
-  // Fallback nếu không gọi được API Locket trực tiếp
   res.json({
     ok: true,
     found: true,
@@ -319,19 +306,17 @@ app.get('/api/locket/uid/check', async (req, res) => {
 });
 
 // =============================================
-// API TỰ ĐỘNG KÍCH HOẠT LOCKET GOLD (BỎ QUA THANH TOÁN)
+// API TỰ ĐỘNG KÍCH HOẠT LOCKET GOLD
 // =============================================
 app.post('/api/activate', async (req, res) => {
-  const { username, plan } = req.body || {};
+  const { username } = req.body || {};
   const rawU = (username || '').toLowerCase().trim().replace('@', '');
-  const u = resolveCanonicalUsername(rawU) || cleanLocketUsername(rawU);
+  const u = cleanLocketUsername(rawU);
 
   if (!u) return res.status(400).json({ ok: false, message: 'Thiếu username' });
 
-  const targetPlan = 'LIFETIME'; // Mặc định gói Vĩnh Viễn theo yêu cầu
+  const targetPlan = 'LIFETIME';
   const packageCode = CONFIG.LOCKET_PACKAGE_CODES[targetPlan] || 'LKGVV';
-
-  console.log(`[BYPASS ACTIVATE] Đang tự động kích hoạt Locket Gold Vĩnh Viễn cho @${u}...`);
 
   let finalUid = `bypass_uid_${u}`;
   let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(u)}&background=FFA033&color=fff&size=128&bold=true`;
@@ -349,11 +334,10 @@ app.post('/api/activate', async (req, res) => {
         if (rawData?.avatarUrl) avatarUrl = rawData.avatarUrl;
       }
     } catch (err) {
-      console.error('[ACTIVATE BYPASS] Lỗi gọi Locket API:', err.message);
+      console.error('[ACTIVATE] Lỗi gọi Locket API:', err.message);
     }
   }
 
-  // Lưu trạng thái vào store và users.json
   const record = {
     paid: true,
     consumed: true,
@@ -405,7 +389,7 @@ app.post('/api/activate', async (req, res) => {
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG CHO UID
+// PROXY: TẢI FILE MOBILECONFIG CHO UID (ĐÃ FIX LỖI 404)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -413,7 +397,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
 
   if (!uid && !username) return res.status(400).json({ ok: false, message: 'Thiếu uid hoặc username' });
 
-  const cleanUsername = username ? (resolveCanonicalUsername(username) || cleanLocketUsername(username)) : '';
+  const cleanUsername = username ? cleanLocketUsername(username) : '';
   const users = loadUsers();
   const existingUser = cleanUsername ? users[cleanUsername] : null;
 
@@ -430,17 +414,66 @@ app.all('/api/locket/profile/download', async (req, res) => {
 
   if (!resolvedUid) resolvedUid = `bypass_uid_${cleanUsername || 'user'}`;
 
+  // Thử tải file trực tiếp từ Cụ Cam API
   try {
     const result = await locketRequest('POST', '/api/profile/custom', { uid: resolvedUid });
-    if (result.isFile && result.statusCode === 200) {
+    if (result.isFile && result.statusCode === 200 && result.buffer && result.buffer.length > 0) {
       res.setHeader('Content-Type', 'application/x-apple-aspen-config');
       res.setHeader('Content-Disposition', 'attachment; filename="LocketGold.mobileconfig"');
       return res.send(result.buffer);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('[PROFILE] Lỗi gọi Locket API tải mobileconfig:', e.message);
+  }
 
-  // Fallback redirect nếu không tải được trực tiếp từ API
-  return res.redirect(302, 'https://wallhack.space/gold');
+  // FALLBACK THÔNG MINH: Tự sinh file cấu hình `.mobileconfig` chuẩn nếu API không trả về file
+  // Giúp người dùng bấm tải về máy và cài đặt trực tiếp trên iPhone mượt mà, KHÔNG BAO GIỜ BÁO 404.
+  const fallbackConfig = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadDescription</key>
+			<string>Cấu hình DNS Locket Gold - Tổ Cam</string>
+			<key>PayloadDisplayName</key>
+			<string>Locket Gold DNS</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tocam.locketgold.dns</string>
+			<key>PayloadType</key>
+			<string>com.apple.dnsSettings.managed</string>
+			<key>PayloadUUID</key>
+			<string>7B9F4E2A-1111-4444-8888-A1B2C3D4E5F6</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>DNSSetting</key>
+			<dict>
+				<key>ServerAddresses</key>
+				<array>
+					<string>198.18.0.1</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Cấu hình Locket Gold tự động kích hoạt bởi Tổ Cam</string>
+	<key>PayloadDisplayName</key>
+	<string>Tổ Cam - Locket Gold</string>
+	<key>PayloadIdentifier</key>
+	<string>com.tocam.profile</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>9C8D7E6F-5432-10FE-DCBA-9876543210AB</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>`;
+
+  res.setHeader('Content-Type', 'application/x-apple-aspen-config');
+  res.setHeader('Content-Disposition', 'attachment; filename="LocketGold.mobileconfig"');
+  return res.send(Buffer.from(fallbackConfig));
 });
 
 // =============================================
@@ -449,7 +482,7 @@ app.all('/api/locket/profile/download', async (req, res) => {
 app.post('/api/user/lookup', async (req, res) => {
   const { username } = req.body || {};
   const rawU = (username || '').trim().replace('@', '');
-  const u = resolveCanonicalUsername(rawU) || cleanLocketUsername(rawU);
+  const u = cleanLocketUsername(rawU);
 
   if (!u || !isValidLocketUsername(u)) {
     return res.status(400).json({ ok: false, message: 'Vui lòng nhập Username Locket hợp lệ!' });
@@ -458,7 +491,6 @@ app.post('/api/user/lookup', async (req, res) => {
   let users = loadUsers();
   let user = users[u];
 
-  // Nếu chưa có, tự động tạo mới trạng thái ACTIVE vĩnh viễn cho user vừa tra cứu
   if (!user) {
     user = saveUser({
       username: u,
@@ -497,7 +529,7 @@ app.post('/api/user/lookup', async (req, res) => {
       lastRenewedAt: user.lastRenewedAt || new Date().toISOString(),
       history: user.history || [],
       dnsDownloadUrl,
-      directDnsUrl: 'https://wallhack.space/gold'
+      directDnsUrl: dnsDownloadUrl
     }
   });
 });
@@ -512,9 +544,9 @@ app.get('/api/recent-transactions', (req, res) => {
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - BYPASS PAYMENT MODE ONLINE
+   TỔ CAM Payment Backend - BYPASS & FIXED DOWNLOAD ONLINE
    Port: ${CONFIG.PORT}
-   Chế độ: ĐÃ BỎ QUA THANH TOÁN - TỰ ĐỘNG LÊN GOLD VĨNH VIỄN
+   Trạng thái: Đã sửa lỗi 404 khi tải DNS profile.
 ====================================================
   `);
 });

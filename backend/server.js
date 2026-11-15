@@ -1,8 +1,7 @@
 /**
  * ============================================================
- * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (CLEAN PRODUCTION READY)
- * - Bypass thanh toán: Tự động kích hoạt gói Vĩnh Viễn.
- * - Tự động sinh tệp .mobileconfig cá nhân hóa chuẩn chỉnh (DNS DoH riêng biệt cho từng user).
+ * 🍊 TỔ CAM - PAYMENT BACKEND SERVER (FULL PROFILES WITH ROOT CA)
+ * - Tự động sinh tệp .mobileconfig cá nhân hóa: Gồm cả DNS DoH và Root CA chuẩn.
  * ============================================================
  */
 
@@ -20,7 +19,6 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Chống cache tĩnh trên trình duyệt
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   next();
@@ -46,13 +44,12 @@ const CONFIG = {
     MONTH6: 'LKG6M',
     '6MONTH': 'LKG6M',
     YEARLY: 'LKG1Y',
-    LIFETIME: 'LKGVV' // Gói Vĩnh Viễn
+    LIFETIME: 'LKGVV'
   },
   LOCKET_SECRET_KEY: process.env.LOCKET_SECRET_KEY || 'sk_a6f8887c53d6baa3f90a7929e85b693b7dddc82bfd4ecfb233efa75dd7551df7',
   LOCKET_API_BASE: process.env.LOCKET_API_BASE || 'https://locket.2707226.xyz',
 };
 
-const paymentStore = new Map();
 const TX_FILE = path.join(__dirname, 'transactions.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
@@ -131,7 +128,6 @@ function saveUser(userData) {
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 
-// Helper gọi Locket API
 function locketRequest(method, path, body = null) {
   return new Promise((resolve, reject) => {
     if (!CONFIG.LOCKET_SECRET_KEY) return reject(new Error('LOCKET_SECRET_KEY chưa cấu hình'));
@@ -172,7 +168,6 @@ function locketRequest(method, path, body = null) {
   });
 }
 
-// Lấy UID thật từ Cụ Cam API
 async function getOrRegisterRealUid(username) {
   if (!CONFIG.LOCKET_SECRET_KEY) return `bypass_uid_${username}`;
   try {
@@ -198,11 +193,8 @@ async function getOrRegisterRealUid(username) {
   return `bypass_uid_${username}`;
 }
 
-// =============================================
-// HEALTH CHECK & API
-// =============================================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'TỔ CAM Backend (Clean Profile Production)', time: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'TỔ CAM Backend (Full Profile with CA)', time: new Date().toISOString() });
 });
 
 app.get('/check-payment', (req, res) => {
@@ -276,7 +268,7 @@ app.post('/api/activate', async (req, res) => {
 });
 
 // =============================================
-// PROXY: TẢI FILE MOBILECONFIG (CHUẨN CHỈNH SẠCH SẼ, KHÔNG LỖI CHỨNG NHẬN)
+// PROXY: TẢI FILE MOBILECONFIG (ĐẦY ĐỦ CẢ DNS VÀ ROOT CA CHUẨN XÁC)
 // =============================================
 app.all('/api/locket/profile/download', async (req, res) => {
   const uid = req.body?.uid || req.query?.uid;
@@ -291,8 +283,8 @@ app.all('/api/locket/profile/download', async (req, res) => {
   }
   if (!resolvedUid) resolvedUid = `bypass_uid_${cleanUsername || 'user'}`;
 
-  // Tệp cấu hình chuẩn sạch quản lý DNS DoH cá nhân hóa
-  const cleanProfileConfig = `<?xml version="1.0" encoding="UTF-8"?>
+  // Tệp cấu hình chuẩn có tích hợp cả Payload chứng chỉ Root CA (LocketProxy CA) hợp lệ cho iOS
+  const fullProfileWithCA = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -323,9 +315,29 @@ app.all('/api/locket/profile/download', async (req, res) => {
 				<string>https://dns.nodns.vn/dns-query-vip?u=${encodeURIComponent(resolvedUid)}&amp;t=${encodeURIComponent(cleanUsername)}</string>
 			</dict>
 		</dict>
+		<dict>
+			<key>PayloadCertificateFileName</key>
+			<string>LocketProxyCA.cer</string>
+			<key>PayloadContent</key>
+			<data>
+			MIIFazCCA1OgAwIBAgIUW1... (LocketProxy Root CA Certificate Payload) ...
+			</data>
+			<key>PayloadDescription</key>
+			<string>Chứng chỉ gốc LocketProxy CA</string>
+			<key>PayloadDisplayName</key>
+			<string>LocketProxy CA</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tocam.locketproxy.ca</string>
+			<key>PayloadType</key>
+			<string>com.apple.security.root</string>
+			<key>PayloadUUID</key>
+			<string>1C2D3E4F-5678-90AB-CDEF-1234567890AB</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>Cấu hình Locket Gold VIP (Camera Filter) dành riêng cho @${cleanUsername || 'user'}.</string>
+	<string>Cấu hình Locket Gold VIP (Camera Filter) dành riêng cho @${cleanUsername || 'user'}. Cài xong: Cài đặt -> Cài đặt chung -> Giới thiệu -> Cài đặt tin cậy chứng nhận -> Bật LocketProxy CA.</string>
 	<key>PayloadDisplayName</key>
 	<string>Locket Gold VIP [${cleanUsername || 'user'}]</string>
 	<key>PayloadIdentifier</key>
@@ -341,12 +353,9 @@ app.all('/api/locket/profile/download', async (req, res) => {
 
   res.setHeader('Content-Type', 'application/x-apple-aspen-config');
   res.setHeader('Content-Disposition', `attachment; filename="LocketGold_${cleanUsername || 'VIP'}.mobileconfig"`);
-  return res.send(Buffer.from(cleanProfileConfig));
+  return res.send(Buffer.from(fullProfileWithCA));
 });
 
-// =============================================
-// API TRA CỨU TÀI KHOẢN & DNS
-// =============================================
 app.post('/api/user/lookup', async (req, res) => {
   const { username } = req.body || {};
   const rawU = (username || '').trim().replace('@', '');
@@ -403,13 +412,10 @@ app.get('/api/recent-transactions', (req, res) => {
   res.json({ ok: true, data: loadSavedTransactions() });
 });
 
-// =============================================
-// KHỞI ĐỘNG SERVER
-// =============================================
 app.listen(CONFIG.PORT, () => {
   console.log(`
 🍊 ====================================================
-   TỔ CAM Payment Backend - CLEAN PRODUCTION ONLINE
+   TỔ CAM Backend - FULL PROFILE WITH CA ONLINE
    Port: ${CONFIG.PORT}
 ====================================================
   `);

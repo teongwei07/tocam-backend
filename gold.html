@@ -74,204 +74,133 @@
       </div>
     </div>
 
-    <!-- Stepper Progress Bar (Thanh toán là Bước 2, Cài DNS là Bước 3) -->
+    <!-- Stepper Progress Bar (Chỉ còn 2 bước: Chọn Gói & Cài DNS) -->
     <div class="stepper">
       <div class="step-item active" id="stepper-1">
         <div class="step-circle">1</div>
-        <span>Chọn Gói</span>
-      </div>
-      <div class="step-line"></div>
-      <div class="step-item" id="stepper-2">
-        <div class="step-circle">2</div>
-        <span>Thanh Toán</span>
+        <span>Chọn Gói &amp; User</span>
       </div>
       <div class="step-line"></div>
       <div class="step-item" id="stepper-3">
-        <div class="step-circle">3</div>
-        <span>Cài DNS</span>
+        <div class="step-circle">2</div>
+        <span>Cài Đặt DNS</span>
       </div>
     </div>
 
     <!-- ==================== BƯỚC 1: CHỌN GÓI & USERNAME ==================== -->
     <div class="wizard-card wizard-step" id="step-1">
       <h2 style="font-family:'Fredoka',sans-serif; color:#fff; font-size:18px; margin-bottom:12px;">
-        1. Chọn Gói Nâng Cấp Phù Hợp
+        1. Chọn Gói Nâng Cấp &amp; Nhập Username
       </h2>
 
-      <!-- Bảng giá 9k / 39k / 69k / 99k -->
+      <!-- Bảng giá -->
       <div class="plans-grid">
-        <!-- Gói Test Dùng Thử - 9k -->
+        <!-- Gói Test Dùng Thử -->
         <div class="plan-card" id="plan-card-test"
-          onclick="selectPlan(this, 'Gói Test (1 Ngày)', 9000, '9.000đ', 'TEST')">
+          onclick="selectPlan(this, 'Gói Test (1 Ngày)', 0, 'Miễn phí', 'TEST')">
           <div class="plan-select-indicator"><i class="fa-solid fa-check"></i></div>
           <div class="plan-badge badge-test">
             <i class="fa-solid fa-flask"></i> DÙNG THỬ
           </div>
           <div class="plan-header">Gói Test (1 Ngày)</div>
-          <div class="plan-price">9.000đ <small>/1 ngày</small></div>
+          <div class="plan-price">Miễn Phí <small>/1 ngày</small></div>
           <ul class="plan-features-mini">
             <li><i class="fa-solid fa-check"></i> Mở khoá Locket Gold chính chủ</li>
             <li><i class="fa-solid fa-check"></i> Không quảng cáo làm phiền</li>
             <li><i class="fa-solid fa-check"></i> Upload ảnh / video từ thư viện (không viền)</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span>
-            </li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span></li>
             <li><i class="fa-solid fa-check"></i> Thay đổi icon Locket độc quyền</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú
-                vị</span></li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú vị</span></li>
             <li><i class="fa-solid fa-check"></i> Mở khoá giới hạn bạn bè</li>
             <li><i class="fa-solid fa-check"></i> Thêm âm thanh khi quay video</li>
-            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter
-                màu độc quyền</span></li>
+            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter màu độc quyền</span></li>
             <li><i class="fa-solid fa-clock" style="color:#FFA033;"></i> <b>Thời hạn sử dụng 1 ngày (24 giờ)</b></li>
           </ul>
         </div>
 
-        <!-- Gói 6 Tháng - 39k -->
+        <!-- Gói 6 Tháng -->
         <div class="plan-card" id="plan-card-6month"
-          onclick="selectPlan(this, 'Gói 6 Tháng', 39000, '39.000đ', 'MONTH6')">
+          onclick="selectPlan(this, 'Gói 6 Tháng', 0, 'Miễn phí', 'MONTH6')">
           <div class="plan-select-indicator"><i class="fa-solid fa-check"></i></div>
           <div class="plan-badge badge-6month">
             <i class="fa-solid fa-fire"></i> PHỔ BIẾN
           </div>
           <div class="plan-header">Gói 6 Tháng</div>
-          <div class="plan-price">39.000đ <small>/6 tháng</small></div>
+          <div class="plan-price">Miễn Phí <small>/6 tháng</small></div>
           <ul class="plan-features-mini">
             <li><i class="fa-solid fa-check"></i> Mở khoá Locket Gold chính chủ</li>
             <li><i class="fa-solid fa-check"></i> Không quảng cáo làm phiền</li>
             <li><i class="fa-solid fa-check"></i> Upload ảnh / video từ thư viện (không viền)</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span>
-            </li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span></li>
             <li><i class="fa-solid fa-check"></i> Thay đổi icon Locket độc quyền</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú
-                vị</span></li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú vị</span></li>
             <li><i class="fa-solid fa-check"></i> Mở khoá giới hạn bạn bè</li>
             <li><i class="fa-solid fa-check"></i> Thêm âm thanh khi quay video</li>
-            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter
-                màu độc quyền</span></li>
-            <li><i class="fa-solid fa-calendar-check" style="color:#10B981;"></i> <b>Sử dụng trọn vẹn 180 ngày (6
-                Tháng)</b></li>
+            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter màu độc quyền</span></li>
+            <li><i class="fa-solid fa-calendar-check" style="color:#10B981;"></i> <b>Sử dụng trọn vẹn 180 ngày (6 Tháng)</b></li>
           </ul>
         </div>
 
         <!-- Gói 1 Năm -->
         <div class="plan-card" id="plan-card-yearly"
-          onclick="selectPlan(this, 'Gói 1 Năm', 69000, '69.000đ', 'YEARLY')">
+          onclick="selectPlan(this, 'Gói 1 Năm', 0, 'Miễn phí', 'YEARLY')">
           <div class="plan-select-indicator"><i class="fa-solid fa-check"></i></div>
           <div class="plan-badge badge-yearly">
             <i class="fa-solid fa-bolt"></i> TIẾT KIỆM
           </div>
           <div class="plan-header">Gói 1 Năm</div>
-          <div class="plan-price">69.000đ <small>/năm</small></div>
+          <div class="plan-price">Miễn Phí <small>/năm</small></div>
           <ul class="plan-features-mini">
             <li><i class="fa-solid fa-check"></i> Mở khoá Locket Gold chính chủ</li>
             <li><i class="fa-solid fa-check"></i> Không quảng cáo làm phiền</li>
             <li><i class="fa-solid fa-check"></i> Upload ảnh / video từ thư viện (không viền)</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span>
-            </li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span></li>
             <li><i class="fa-solid fa-check"></i> Thay đổi icon Locket độc quyền</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú
-                vị</span></li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú vị</span></li>
             <li><i class="fa-solid fa-check"></i> Mở khoá giới hạn bạn bè</li>
             <li><i class="fa-solid fa-check"></i> Thêm âm thanh khi quay video</li>
-            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter
-                màu độc quyền</span></li>
-            <li><i class="fa-solid fa-calendar-check" style="color:#38BDF8;"></i> <b>Sử dụng trọn vẹn 365 ngày (1
-                Năm)</b></li>
+            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter màu độc quyền</span></li>
+            <li><i class="fa-solid fa-calendar-check" style="color:#38BDF8;"></i> <b>Sử dụng trọn vẹn 365 ngày (1 Năm)</b></li>
           </ul>
         </div>
 
         <!-- Gói Vĩnh Viễn -->
         <div class="plan-card active" id="plan-card-lifetime"
-          onclick="selectPlan(this, 'Gói Vĩnh Viễn', 99000, '99.000đ', 'LIFETIME')">
+          onclick="selectPlan(this, 'Gói Vĩnh Viễn', 0, 'Miễn phí', 'LIFETIME')">
           <div class="plan-select-indicator"><i class="fa-solid fa-check"></i></div>
           <div class="plan-badge">
             <i class="fa-solid fa-crown"></i> KHUYÊN DÙNG
           </div>
           <div class="plan-header">Gói Vĩnh Viễn</div>
-          <div class="plan-price">99.000đ <small>/Vĩnh Viễn</small></div>
+          <div class="plan-price">Miễn Phí <small>/Vĩnh Viễn</small></div>
           <ul class="plan-features-mini">
             <li><i class="fa-solid fa-check"></i> Mở khoá Locket Gold chính chủ</li>
             <li><i class="fa-solid fa-check"></i> Không quảng cáo làm phiền</li>
             <li><i class="fa-solid fa-check"></i> Upload ảnh / video từ thư viện (không viền)</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span>
-            </li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span></li>
             <li><i class="fa-solid fa-check"></i> Thay đổi icon Locket độc quyền</li>
-            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú
-                vị</span></li>
+            <li><i class="fa-solid fa-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú vị</span></li>
             <li><i class="fa-solid fa-check"></i> Mở khoá giới hạn bạn bè</li>
             <li><i class="fa-solid fa-check"></i> Thêm âm thanh khi quay video</li>
-            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter
-                màu độc quyền</span></li>
-            <li><i class="fa-solid fa-shield-halved" style="color:#10B981;"></i> <b>Sử dụng Vĩnh Viễn + Bảo hành đến khi
-                web còn</b></li>
+            <li><i class="fa-solid fa-check"></i> <span style="color:#C084FC; font-weight:700;">Mở khoá bộ lọc Filter màu độc quyền</span></li>
+            <li><i class="fa-solid fa-shield-halved" style="color:#10B981;"></i> <b>Sử dụng Vĩnh Viễn + Bảo hành đến khi web còn</b></li>
           </ul>
         </div>
       </div>
 
-      <!-- Script chọn đúng gói ngay khi vừa render DOM -->
-      <script>
-        (function autoSelectInitialPlan() {
-          try {
-            var params = new URLSearchParams(window.location.search);
-            var p = (params.get('plan') || params.get('package') || params.get('goi') || params.get('p') || localStorage.getItem('tocam_selected_plan') || '').toLowerCase();
-            var isTest = p.indexOf('test') !== -1 || p.indexOf('9000') !== -1 || p.indexOf('9k') !== -1 || p.indexOf('5000') !== -1 || p.indexOf('5k') !== -1 || p.indexOf('dungthu') !== -1;
-            var is6Month = p.indexOf('39') !== -1 || p.indexOf('6m') !== -1 || p.indexOf('6thang') !== -1 || p.indexOf('6month') !== -1 || p.indexOf('phobien') !== -1;
-            var isYearly = p.indexOf('69') !== -1 || p.indexOf('year') !== -1 || p.indexOf('nam') !== -1 || p.indexOf('tietkiem') !== -1;
-            var tCard = document.getElementById('plan-card-test');
-            var mCard = document.getElementById('plan-card-6month');
-            var yCard = document.getElementById('plan-card-yearly');
-            var lCard = document.getElementById('plan-card-lifetime');
-            var btn = document.getElementById('btn-continue-step1');
-            var payAmt = document.getElementById('pay-amount');
-
-            if (isTest) {
-              if (tCard) tCard.classList.add('active');
-              if (mCard) mCard.classList.remove('active');
-              if (yCard) yCard.classList.remove('active');
-              if (lCard) lCard.classList.remove('active');
-              if (btn) btn.innerHTML = '<span>Nâng Cấp/Gia Hạn Gói 9.000đ</span> <i class="fa-solid fa-flask"></i>';
-              if (payAmt) payAmt.innerText = '9.000đ';
-            } else if (is6Month) {
-              if (mCard) mCard.classList.add('active');
-              if (tCard) tCard.classList.remove('active');
-              if (yCard) yCard.classList.remove('active');
-              if (lCard) lCard.classList.remove('active');
-              if (btn) btn.innerHTML = '<span>Nâng Cấp/Gia Hạn Gói 39.000đ</span> <i class="fa-solid fa-fire"></i>';
-              if (payAmt) payAmt.innerText = '39.000đ';
-            } else if (isYearly) {
-              if (yCard) yCard.classList.add('active');
-              if (tCard) tCard.classList.remove('active');
-              if (mCard) mCard.classList.remove('active');
-              if (lCard) lCard.classList.remove('active');
-              if (btn) btn.innerHTML = '<span>Nâng Cấp/Gia Hạn Gói 69.000đ</span> <i class="fa-solid fa-arrow-right"></i>';
-              if (payAmt) payAmt.innerText = '69.000đ';
-            } else {
-              if (lCard) lCard.classList.add('active');
-              if (tCard) tCard.classList.remove('active');
-              if (mCard) mCard.classList.remove('active');
-              if (yCard) yCard.classList.remove('active');
-              if (btn) btn.innerHTML = '<span>Nâng Cấp/Gia Hạn Gói 99.000đ</span> <i class="fa-solid fa-crown"></i>';
-            }
-          } catch (e) { }
-        })();
-      </script>
-
-      <!-- Danh sách đầy đủ 9 thông số tính năng theo yêu cầu -->
+      <!-- Danh sách đầy đủ 9 thông số tính năng -->
       <div class="features-full-list">
         <h4><i class="fa-solid fa-crown"></i> 9 Đặc Quyền VIP Độc Quyền Khi Nâng Cấp:</h4>
         <ul>
           <li><i class="fa-solid fa-circle-check"></i> <span>Mở khoá Locket Gold</span></li>
           <li><i class="fa-solid fa-circle-check"></i> <span>Không quảng cáo</span></li>
           <li><i class="fa-solid fa-circle-check"></i> <span>Upload ảnh/video từ thư viện</span></li>
-          <li><i class="fa-solid fa-circle-check"></i> <span class="text-highlight-video">Quay video Locket 30
-              giây</span></li>
+          <li><i class="fa-solid fa-circle-check"></i> <span class="text-highlight-video">Quay video Locket 30 giây</span></li>
           <li><i class="fa-solid fa-circle-check"></i> <span>Thay đổi icon Locket</span></li>
-          <li><i class="fa-solid fa-circle-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot
-              trend, thú vị</span></li>
+          <li><i class="fa-solid fa-circle-check"></i> <span class="text-highlight-caption">Thêm nhiều caption hot trend, thú vị</span></li>
           <li><i class="fa-solid fa-circle-check"></i> <span>Mở khoá giới hạn bạn bè</span></li>
           <li><i class="fa-solid fa-circle-check"></i> <span>Thêm âm thanh khi quay video</span></li>
-          <li><i class="fa-solid fa-circle-check"></i> <span style="color:#C084FC; font-weight:800;">Mở khoá bộ lọc
-              Filter màu độc quyền</span></li>
+          <li><i class="fa-solid fa-circle-check"></i> <span style="color:#C084FC; font-weight:800;">Mở khoá bộ lọc Filter màu độc quyền</span></li>
         </ul>
       </div>
 
@@ -292,7 +221,7 @@
           <span>Username không hợp lệ (chỉ chữ, số, . _ -)</span>
         </div>
 
-        <!-- Gợi ý lấy username từ link locket.cam/kienviet -->
+        <!-- Gợi ý lấy username -->
         <div class="username-guide-hint">
           <div class="guide-hint-title">
             <i class="fa-solid fa-circle-info"></i>
@@ -307,7 +236,7 @@
           </div>
           <div class="guide-hint-note">
             👉 <b>Các chữ sau dấu / ở cuối</b> chính là Username của bạn (bạn có thể dán thẳng cả link
-            <code>https://locket.cam/...</code> vào ô trên, chỉ nhập username).
+            <code>https://locket.cam/...</code> vào ô trên).
           </div>
         </div>
 
@@ -326,10 +255,10 @@
           </div>
         </div>
 
-        <!-- Link gợi ý tra cứu cho người đã mua -->
+        <!-- Link gợi ý tra cứu -->
         <div
           style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; background: rgba(255,160,51,0.06); padding: 8px 12px; border-radius: 10px; border: 1px dashed rgba(255,160,51,0.25);">
-          <span style="color: #94A3B8;">Đã mua gói trước đó?</span>
+          <span style="color: #94A3B8;">Đã kích hoạt trước đó?</span>
           <a href="javascript:void(0)" onclick="openLookupModal()"
             style="color: #FFA033; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 4px;">
             <i class="fa-solid fa-clock-rotate-left"></i> Tra cứu DNS &amp; Lịch sử &rarr;
@@ -337,150 +266,26 @@
         </div>
       </div>
 
-      <button type="button" class="btn-primary-action" id="btn-continue-step1" onclick="goToStep(2)">
-        <span>Nâng Cấp/Gia Hạn Gói 99.000đ</span>
-        <i class="fa-solid fa-crown"></i>
+      <!-- Nút xác nhận và nhảy thẳng sang bước cấp DNS -->
+      <button type="button" class="btn-primary-action" id="btn-continue-step1" onclick="bypassPaymentAndActivate()">
+        <span>Xác Nhận &amp; Nhận Cấu Hình DNS Ngay</span>
+        <i class="fa-solid fa-bolt"></i>
       </button>
     </div>
 
-    <!-- ==================== BƯỚC 2: THANH TOÁN (ĐƯA LÊN BƯỚC 2) ==================== -->
-    <div class="wizard-card wizard-step" id="step-2" style="display: none;">
-      <h2 style="font-family:'Fredoka',sans-serif; color:#fff; font-size:18px; margin-bottom:4px;">
-        2. Thanh Toán Chuyển Khoản Tự Động
-      </h2>
-      <p style="color:#94A3B8; font-size:12.5px; margin-bottom:16px;">
-        Quét mã VietQR hoặc chuyển khoản theo thông tin bên dưới để hệ thống ghi nhận tức thì:
-      </p>
-
-      <div class="qr-card-wrap">
-        <div class="qr-box"
-          style="padding: 6px; max-width: 290px; margin: 0 auto 12px; border-radius: 20px; background: #fff;">
-          <img id="vietqr-img" src="images/bank_qr.jpg" alt="Mã Techcombank QR NGUYEN MINH HIEP"
-            style="width: 100%; height: auto; display: block; border-radius: 16px;">
-        </div>
-        <div style="font-size:12px; color:#FFA033; font-weight:800;">
-          <i class="fa-regular fa-clock"></i> Thời gian giữ phiên thanh toán: <span id="timer-count">10:00</span>
-        </div>
-      </div>
-
-      <div class="bank-info-table">
-        <div class="bank-info-row">
-          <span>Ngân hàng:</span>
-          <span id="cfg-bank-name">Techcombank</span>
-        </div>
-        <div class="bank-info-row">
-          <span>Số tài khoản:</span>
-          <span>
-            <strong id="cfg-acc-number">2027 0220 07</strong>
-            <button class="copy-btn-inline" onclick="copyCurrentAccountNumber()">Sao chép</button>
-          </span>
-        </div>
-        <div class="bank-info-row">
-          <span>Chủ tài khoản:</span>
-          <span id="cfg-acc-holder">NGUYEN MINH HIEP</span>
-        </div>
-        <div class="bank-info-row">
-          <span>Số tiền:</span>
-          <span style="color:#FF7A00;" id="pay-amount">99.000đ</span>
-        </div>
-        <div class="bank-info-row">
-          <span>Nội dung chuyển:</span>
-          <span>
-            <strong style="color:#38BDF8;" id="pay-memo">TOCAM VIP</strong>
-            <button class="copy-btn-inline" onclick="copyCurrentMemo()">Sao chép</button>
-          </span>
-        </div>
-      </div>
-
-      <!-- ==================== ĐƠN HÀNG ĐANG CHỜ CỦA BẠN (RIÊNG BIỆT) ==================== -->
-      <div class="step2-pending-card-wrap" id="step2-pending-card-wrap"
-        style="margin-top: 14px; background: rgba(56, 189, 248, 0.05); border: 1.5px dashed rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 14px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="live-dot-pulse" id="step2-pending-pulse" style="background:#38BDF8;"></span>
-            <span id="step2-pending-title"
-              style="font-size:12px; font-weight:800; color:#38BDF8; text-transform:uppercase; letter-spacing:0.5px;">
-              Đơn Hàng Của Bạn (Đang Chờ Quét)
-            </span>
-          </div>
-          <span id="step2-pending-tag"
-            style="background:rgba(56,189,248,0.15); color:#38BDF8; border:1px solid rgba(56,189,248,0.3); font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px;">
-            Đang quét 24/7
-          </span>
-        </div>
-
-        <div class="step2-tx-row pending" id="step2-current-tx-row"
-          style="background:rgba(0,0,0,0.3); border:1px solid rgba(56,189,248,0.25);">
-          <div class="step2-tx-left">
-            <div class="step2-tx-icon pending" id="step2-current-tx-icon">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-            </div>
-            <div class="step2-tx-info">
-              <div class="step2-tx-title" id="step2-current-tx-user">
-                @VIP <span style="font-size:11px; font-weight:600; color:#38BDF8; margin-left:4px;"
-                  id="step2-current-tx-plan">Gói Vĩnh Viễn</span>
-              </div>
-              <div class="step2-tx-sub" id="step2-current-tx-sub">
-                <span>Nội dung: <b style="color:#38BDF8;" id="step2-current-tx-memo">TOCAM VIP</b></span> &bull;
-                <span>Vừa tạo</span>
-              </div>
-            </div>
-          </div>
-          <div class="step2-tx-right">
-            <span class="step2-tx-amount" id="step2-current-tx-amount">+99.000đ</span>
-            <span class="step2-tx-badge pending" id="step2-current-tx-badge">
-              <i class="fa-solid fa-spinner fa-spin"></i> Đang chờ...
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== LỊCH SỬ GIAO DỊCH ĐÃ THÀNH CÔNG (TÁCH SANG BÊN KHÁC) ==================== -->
-      <div class="step2-tx-history-box" style="margin-top: 14px;">
-        <div class="step2-tx-history-header">
-          <div class="step2-tx-header-title">
-            <i class="fa-solid fa-circle-check" style="color: #10B981;"></i>
-            <span>Giao Dịch Đã Thành Công Gần Đây</span>
-          </div>
-          <span class="step2-tx-header-live">
-            <span class="live-dot-pulse"></span> Tự động cập nhật
-          </span>
-        </div>
-
-        <div class="step2-tx-list" id="step2-tx-list">
-          <!-- Các giao dịch người mua thật của hệ thống -->
-          <div id="step2-recent-txs" style="display: flex; flex-direction: column; gap: 8px;"></div>
-          <!-- Thanh phân trang khi danh sách giao dịch đầy hàng -->
-          <div class="step2-tx-pagination" id="step2-tx-pagination" style="display: none;"></div>
-        </div>
-      </div>
-
-      <!-- Trạng thái chờ hệ thống tự động quét và chuyển trang -->
-      <div
-        style="margin: 12px 0 14px; padding: 12px 14px; background: rgba(56, 189, 248, 0.08); border: 1.5px dashed rgba(56, 189, 248, 0.4); border-radius: 14px; text-align: center;">
-        <div
-          style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #38BDF8; font-weight: 800; font-size: 13.5px;">
-          <i class="fa-solid fa-bolt"></i>
-          <span>Hệ thống tự động kích hoạt & chuyển bước 3 khi nhận được tiền!</span>
-        </div>
-        <p style="margin-top: 4px; font-size: 11.5px; color: #94A3B8; line-height: 1.4; margin-bottom: 0;">
-          Sau khi chuyển khoản, giao dịch ở trên sẽ tự động chuyển sang <b style="color:#10B981;">"Thành công"</b> và
-          lập tức đưa bạn sang bước Cài đặt DNS.
-        </p>
-      </div>
-
-      <button type="button" class="btn-back-action" onclick="goToStep(1)" style="margin-top: 10px;">
-        <i class="fa-solid fa-arrow-left"></i> Quay lại chọn gói
-      </button>
-    </div>
-
-    <!-- ==================== BƯỚC 3: CÀI ĐẶT DNS DOH & KÍCH HOẠT ==================== -->
+    <!-- ==================== BƯỚC 2 (ID step-3): CÀI ĐẶT DNS DOH & KÍCH HOẠT ==================== -->
     <div class="wizard-card wizard-step" id="step-3" style="display: none;">
-      <h2 style="font-family:'Fredoka',sans-serif; color:#fff; font-size:18px; margin-bottom:4px;">
-        3. Cài Đặt DNS DoH &amp; Kích Hoạt
-      </h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <h2 style="font-family:'Fredoka',sans-serif; color:#fff; font-size:18px; margin:0;">
+          2. Cài Đặt DNS DoH &amp; Kích Hoạt
+        </h2>
+        <button type="button" class="btn-back-action" onclick="backToStep1()" style="width:auto; padding:6px 12px; font-size:12px; margin:0;">
+          <i class="fa-solid fa-arrow-left"></i> Đổi User
+        </button>
+      </div>
+
       <p style="color:#94A3B8; font-size:12.5px; margin-bottom:16px;">
-        Cài đặt cấu hình DNS DoH bảo mật để kích hoạt đầy đủ 9 tính năng VIP Locket Gold trên iPhone:
+        Hệ thống đã xác nhận thành công cho tài khoản <b id="activated-user-display" style="color:#FFA033;">@user</b>. Cài đặt cấu hình DNS DoH bên dưới để kích hoạt:
       </p>
 
       <div class="guide-box">
@@ -492,19 +297,13 @@
             <p style="color:#CBD5E1; font-size:13px; margin-top:4px; line-height:1.5;">
               Vào <b>Cài đặt</b> → <b>Cài đặt chung</b> → <b>VPN &amp; Quản lý thiết bị</b> → <b>Cài đặt LocketGold</b>.
             </p>
-            <!-- Trạng thái chưa kích hoạt: Chưa hiện link/tải -->
-            <div id="dns-actions-pending"
-              style="margin-top: 10px; padding: 10px 14px; background: rgba(255, 122, 0, 0.08); border: 1.5px dashed rgba(255, 122, 0, 0.4); border-radius: 12px; display: flex; align-items: center; gap: 8px;">
-              <i class="fa-solid fa-lock" style="color: #FF7A00; font-size: 14px;"></i>
-              <span style="color: #FDBA74; font-size: 12.5px; line-height: 1.4;">
-                Chưa có link tải DNS. Vui lòng bấm nút <b>"Kích Hoạt Gold &amp; Nhận Cấu Hình DNS"</b> ở bên dưới để lấy
-                link tải!
-              </span>
-            </div>
+
+            <!-- Trạng thái chưa kích hoạt -->
+            <div id="dns-actions-pending" style="display: none;"></div>
 
             <!-- Trạng thái đã kích hoạt: Hiện nút tải và sao chép link -->
             <div id="dns-actions-ready"
-              style="display: none; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;">
+              style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;">
               <button type="button" class="btn-primary-action" id="btn-download-dns" onclick="downloadProfileDNS()"
                 style="padding: 10px 16px; font-size: 13px; width: auto; display: inline-flex; margin-top: 0; background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
                 <i class="fa-brands fa-safari" style="font-size: 15px;"></i>
@@ -525,8 +324,7 @@
           <div style="flex: 1;">
             <b style="color:#fff; font-size:14px;">Bước 2: Bật tin cậy chứng chỉ</b>
             <p style="color:#CBD5E1; font-size:13px; margin-top:4px; line-height:1.5;">
-              Vào <b>Cài đặt</b> → <b>Cài đặt chung</b> → <b>Giới thiệu</b> → Kéo xuống dưới cùng chọn <b>Cài đặt tin
-                cậy chứng nhận</b> → <b>Gạt bật xanh chứng chỉ</b>.
+              Vào <b>Cài đặt</b> → <b>Cài đặt chung</b> → <b>Giới thiệu</b> → Kéo xuống dưới cùng chọn <b>Cài đặt tin cậy chứng nhận</b> → <b>Gạt bật xanh chứng chỉ</b>.
             </p>
           </div>
         </div>
@@ -558,13 +356,13 @@
 
       <!-- Terminal Giả Lập Kích Hoạt -->
       <div class="terminal-card" id="terminal-content">
-        <div class="terminal-line info">[SẴN SÀNG] Sẵn sàng kích hoạt Locket Gold...</div>
-        <div class="terminal-line gold">[HƯỚNG DẪN] 👉 Nhấn nút "Kích Hoạt Gold &amp; Nhận Cấu Hình DNS" bên dưới.</div>
+        <div class="terminal-line success">[THÀNH CÔNG] Đã xác nhận kích hoạt tự động!</div>
+        <div class="terminal-line gold">[SẴN SÀNG] Bấm "Tải Hồ Sơ DNS (.mobileconfig)" ở Bước 1 để cài đặt.</div>
       </div>
 
       <button type="button" class="btn-primary-action" id="btn-activate-gold" onclick="checkActivation()">
-        <i class="fa-solid fa-bolt"></i>
-        <span>Kích Hoạt Gold &amp; Nhận Cấu Hình DNS</span>
+        <i class="fa-solid fa-rotate"></i>
+        <span>Làm Mới &amp; Kiểm Tra Trạng Thái DNS</span>
       </button>
     </div>
 
@@ -585,7 +383,7 @@
               Tra Cứu DNS &amp; Lịch Sử
             </h3>
             <p style="color:#94A3B8; font-size:12px; margin:2px 0 0;">
-              Xem hồ sơ DNS đã mua, thời hạn sử dụng và lịch sử giao dịch
+              Xem hồ sơ DNS đã kích hoạt và thời hạn sử dụng
             </p>
           </div>
         </div>
@@ -670,18 +468,17 @@
           <!-- Hướng dẫn nhanh -->
           <div
             style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; margin-bottom:14px; font-size:12px; color:#CBD5E1; line-height:1.5;">
-            <b style="color:#FFA033; display:block; margin-bottom:4px;"><i class="fa-solid fa-circle-info"></i> Các bước
-              cài đặt:</b>
+            <b style="color:#FFA033; display:block; margin-bottom:4px;"><i class="fa-solid fa-circle-info"></i> Các bước cài đặt:</b>
             1. Vào <b>Cài đặt &rarr; Cài đặt chung &rarr; VPN &amp; Quản lý thiết bị</b> &rarr; Cài đặt LocketGold.<br>
             2. Vào <b>Cài đặt chung &rarr; Giới thiệu &rarr; Cài đặt tin cậy chứng nhận</b> &rarr; Gạt bật xanh.<br>
             3. Xóa app Locket và tải lại từ App Store.
           </div>
 
-          <!-- Bảng lịch sử mua hàng -->
+          <!-- Bảng lịch sử -->
           <div style="margin-bottom:14px;">
             <h4
               style="color:#fff; font-size:13px; font-weight:800; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-              <i class="fa-solid fa-receipt" style="color:#FFA033;"></i> Lịch Sử Giao Dịch Đã Mua
+              <i class="fa-solid fa-receipt" style="color:#FFA033;"></i> Lịch Sử Kích Hoạt
             </h4>
             <div style="overflow-x:auto; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
               <table class="lookup-tx-table">
@@ -689,115 +486,25 @@
                   <tr>
                     <th>Thời gian</th>
                     <th>Gói</th>
-                    <th>Số tiền</th>
+                    <th>Phí</th>
                     <th>Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody id="lookup-tx-tbody">
                   <tr>
-                    <td colspan="4" style="text-align:center; color:#64748B;">Chưa có giao dịch</td>
+                    <td colspan="4" style="text-align:center; color:#64748B;">Chưa có dữ liệu</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-          <!-- Nút Gia Hạn Thêm & Đặt PIN -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <button type="button" onclick="renewFromLookup()" class="btn-primary-action"
-              style="padding:10px; font-size:12px; background:linear-gradient(135deg, #FF7A00, #EA580C);">
-              <i class="fa-solid fa-bolt"></i> <span>Gia Hạn Thêm Gói</span>
-            </button>
+          <!-- Nút Đặt PIN -->
+          <div>
             <button type="button" onclick="toggleSetPinBox()" class="btn-secondary-action"
-              style="padding:10px; font-size:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:12px; cursor:pointer;">
-              <i class="fa-solid fa-key"></i> <span>Cài / Đổi PIN</span>
+              style="width: 100%; padding:10px; font-size:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:12px; cursor:pointer;">
+              <i class="fa-solid fa-key"></i> <span>Cài / Đổi Mã PIN Bảo Mật</span>
             </button>
-          </div>
-
-          <!-- Box chọn gói gia hạn trực quan -->
-          <div id="lookup-renew-box"
-            style="display:none; margin-top:12px; padding:12px; background:rgba(255,160,51,0.08); border:1px solid rgba(255,160,51,0.3); border-radius:14px;">
-            <div
-              style="color:#FFA033; font-size:12px; font-weight:800; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
-              <span><i class="fa-solid fa-cart-shopping"></i> Chọn gói muốn gia hạn cho @<b id="renew-plan-target-user"
-                  style="color:#fff;">username</b>:</span>
-              <button type="button" onclick="toggleRenewBox()"
-                style="background:none; border:none; color:#94A3B8; font-size:16px; cursor:pointer; line-height:1;">&times;</button>
-            </div>
-
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              <!-- Gói Test 1 Ngày -->
-              <button type="button" onclick="executeRenewPlan('TEST')"
-                style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:10px; background:rgba(168,85,247,0.12); border:1.5px solid rgba(168,85,247,0.4); color:#fff; cursor:pointer; text-align:left; transition:all 0.2s;"
-                onmouseover="this.style.borderColor='#A855F7'; this.style.background='rgba(168,85,247,0.2)';"
-                onmouseout="this.style.borderColor='rgba(168,85,247,0.4)'; this.style.background='rgba(168,85,247,0.12)';">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:20px;">⚡</span>
-                  <div>
-                    <div style="font-size:13px; font-weight:800; color:#C084FC;">Gói Test (1 Ngày)</div>
-                    <div style="font-size:11px; color:#94A3B8;">Kích hoạt trải nghiệm 24h</div>
-                  </div>
-                </div>
-                <div style="text-align:right;">
-                  <div style="font-size:14px; font-weight:800; color:#10B981;">9.000đ</div>
-                  <span style="font-size:10px; color:#A855F7; font-weight:700;">Gia hạn &rarr;</span>
-                </div>
-              </button>
-
-              <!-- Gói 6 Tháng -->
-              <button type="button" onclick="executeRenewPlan('MONTH6')"
-                style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:10px; background:rgba(16,185,129,0.12); border:1.5px solid rgba(16,185,129,0.4); color:#fff; cursor:pointer; text-align:left; transition:all 0.2s;"
-                onmouseover="this.style.borderColor='#10B981'; this.style.background='rgba(16,185,129,0.2)';"
-                onmouseout="this.style.borderColor='rgba(16,185,129,0.4)'; this.style.background='rgba(16,185,129,0.12)';">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:20px;">🔥</span>
-                  <div>
-                    <div style="font-size:13px; font-weight:800; color:#10B981;">Gói 6 Tháng (Phổ biến)</div>
-                    <div style="font-size:11px; color:#94A3B8;">Sử dụng trọn vẹn 180 ngày</div>
-                  </div>
-                </div>
-                <div style="text-align:right;">
-                  <div style="font-size:14px; font-weight:800; color:#10B981;">39.000đ</div>
-                  <span style="font-size:10px; color:#10B981; font-weight:700;">Gia hạn &rarr;</span>
-                </div>
-              </button>
-
-              <!-- Gói 1 Năm -->
-              <button type="button" onclick="executeRenewPlan('YEARLY')"
-                style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:10px; background:rgba(56,189,248,0.12); border:1.5px solid rgba(56,189,248,0.4); color:#fff; cursor:pointer; text-align:left; transition:all 0.2s;"
-                onmouseover="this.style.borderColor='#38BDF8'; this.style.background='rgba(56,189,248,0.2)';"
-                onmouseout="this.style.borderColor='rgba(56,189,248,0.4)'; this.style.background='rgba(56,189,248,0.12)';">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:20px;">📅</span>
-                  <div>
-                    <div style="font-size:13px; font-weight:800; color:#38BDF8;">Gói 1 Năm (Tiết kiệm)</div>
-                    <div style="font-size:11px; color:#94A3B8;">Sử dụng trọn vẹn 365 ngày</div>
-                  </div>
-                </div>
-                <div style="text-align:right;">
-                  <div style="font-size:14px; font-weight:800; color:#10B981;">69.000đ</div>
-                  <span style="font-size:10px; color:#38BDF8; font-weight:700;">Gia hạn &rarr;</span>
-                </div>
-              </button>
-
-              <!-- Gói Vĩnh Viễn -->
-              <button type="button" onclick="executeRenewPlan('LIFETIME')"
-                style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:10px; background:rgba(255,160,51,0.14); border:1.5px solid #FFA033; color:#fff; cursor:pointer; text-align:left; transition:all 0.2s;"
-                onmouseover="this.style.borderColor='#FFA033'; this.style.background='rgba(255,160,51,0.25)';"
-                onmouseout="this.style.borderColor='#FFA033'; this.style.background='rgba(255,160,51,0.14)';">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:20px;">👑</span>
-                  <div>
-                    <div style="font-size:13px; font-weight:800; color:#FFA033;">Gói Vĩnh Viễn (Hot)</div>
-                    <div style="font-size:11px; color:#94A3B8;">Bảo hành trọn đời, dùng mãi mãi</div>
-                  </div>
-                </div>
-                <div style="text-align:right;">
-                  <div style="font-size:14px; font-weight:800; color:#10B981;">99.000đ</div>
-                  <span style="font-size:10px; color:#FFA033; font-weight:700;">Gia hạn &rarr;</span>
-                </div>
-              </button>
-            </div>
           </div>
 
           <!-- Box cài / đổi PIN -->
@@ -819,10 +526,98 @@
       </div>
     </div>
 
-    <!-- Nạp cấu hình config.js trước để đọc dữ liệu tài khoản -->
+    <!-- Nạp cấu hình config.js và các file JS gốc -->
     <script src="js/config.js?v=3.3"></script>
     <script src="js/main.js?v=4.5&ts=20261012_1535"></script>
     <script src="js/gold.js?v=3.3"></script>
+
+    <!-- Script xử lý bỏ qua thanh toán và tự động kích hoạt DNS -->
+    <script>
+      function bypassPaymentAndActivate() {
+        var usernameInput = document.getElementById('username-input');
+        var rawVal = usernameInput ? usernameInput.value.trim() : '';
+
+        // Xử lý nếu người dùng dán cả link https://locket.cam/username
+        var cleanUsername = rawVal.replace(/^https?:\/\/(www\.)?locket\.cam\//i, '').replace(/^@+/, '').trim();
+
+        if (!cleanUsername) {
+          var errBox = document.getElementById('username-error-msg');
+          if (errBox) {
+            errBox.style.display = 'flex';
+            errBox.querySelector('span').innerText = 'Vui lòng nhập Username Locket của bạn trước khi tiếp tục!';
+          } else {
+            alert('Vui lòng nhập Username Locket của bạn trước!');
+          }
+          if (usernameInput) usernameInput.focus();
+          return;
+        }
+
+        // Lưu username vào bộ nhớ trình duyệt để các hàm tải DNS trong gold.js sử dụng
+        try {
+          localStorage.setItem('tocam_username', cleanUsername);
+          localStorage.setItem('locket_username', cleanUsername);
+          if (typeof window.currentUsername !== 'undefined') {
+            window.currentUsername = cleanUsername;
+          }
+        } catch (e) {}
+
+        // Ẩn bước 1, mở thẳng bước 3 (Cài DNS)
+        var step1 = document.getElementById('step-1');
+        var step3 = document.getElementById('step-3');
+        if (step1) step1.style.display = 'none';
+        if (step3) step3.style.display = 'block';
+
+        // Cập nhật thanh Stepper trên cùng
+        var stepper1 = document.getElementById('stepper-1');
+        var stepper3 = document.getElementById('stepper-3');
+        if (stepper1) {
+          stepper1.classList.remove('active');
+          stepper1.classList.add('completed');
+        }
+        if (stepper3) {
+          stepper3.classList.add('active');
+        }
+
+        // Hiển thị tên user đã xác nhận
+        var userDisplay = document.getElementById('activated-user-display');
+        if (userDisplay) {
+          userDisplay.innerText = '@' + cleanUsername;
+        }
+
+        // Mở khóa khu vực tải DNS
+        var pendingBox = document.getElementById('dns-actions-pending');
+        var readyBox = document.getElementById('dns-actions-ready');
+        if (pendingBox) pendingBox.style.display = 'none';
+        if (readyBox) readyBox.style.display = 'flex';
+
+        // Cập nhật nội dung Terminal trạng thái
+        var terminal = document.getElementById('terminal-content');
+        if (terminal) {
+          terminal.innerHTML =
+            '<div class="terminal-line success">[XÁC NHẬN] Đã duyệt tự động tài khoản: @' + cleanUsername + '</div>' +
+            '<div class="terminal-line gold">[HOÀN TẤT] Đã cấp quyền Locket Gold &amp; mở khóa hồ sơ DNS DoH!</div>' +
+            '<div class="terminal-line info">[HƯỚNG DẪN] 👉 Nhấn "Tải Hồ Sơ DNS (.mobileconfig)" ở Bước 1 để cài vào máy.</div>';
+        }
+
+        // Cuộn mượt lên đầu trang
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function backToStep1() {
+        var step1 = document.getElementById('step-1');
+        var step3 = document.getElementById('step-3');
+        if (step3) step3.style.display = 'none';
+        if (step1) step1.style.display = 'block';
+
+        var stepper1 = document.getElementById('stepper-1');
+        var stepper3 = document.getElementById('stepper-3');
+        if (stepper3) stepper3.classList.remove('active');
+        if (stepper1) {
+          stepper1.classList.remove('completed');
+          stepper1.classList.add('active');
+        }
+      }
+    </script>
 </body>
 
 </html>

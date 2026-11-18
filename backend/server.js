@@ -281,7 +281,8 @@ app.get('/api/locket/uid/check', async (req, res) => {
 
   if (CONFIG.LOCKET_SECRET_KEY) {
     try {
-      const result = await locketRequest('GET`, `/api/uid/check?username=${encodeURIComponent(username)}`);
+      // Đã sửa dấu nháy chuẩn cho cú pháp gọi locketRequest
+      const result = await locketRequest('GET', `/api/uid/check?username=${encodeURIComponent(username)}`);
       if (result.statusCode === 200 && result.data) {
         const d = result.data.data || result.data;
         const verifiedUid = d?.uid?.uidString || d?.uid || null;

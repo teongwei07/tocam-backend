@@ -31,7 +31,6 @@ const CONFIG = {
   LOCKET_API_BASE: process.env.LOCKET_API_BASE || 'https://locket.2707226.xyz',
 };
 
-const TX_FILE = path.join(__dirname, 'transactions.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
 const KNOWN_CANONICAL_ALIASES = {
@@ -138,77 +137,75 @@ app.get('/api/locket/uid/check', async (req, res) => {
   });
 });
 
-// API Tải file mobileconfig tích hợp cả LocketProxy CA và DNS
+// API Tải file mobileconfig tích hợp chuẩn LocketProxy CA và DNS
 app.all('/api/locket/profile/download', async (req, res) => {
   const username = req.body?.username || req.query?.username;
   if (!username) return res.status(400).json({ ok: false, message: 'Thiếu username' });
 
   const cleanUser = resolveCanonicalUsername(username);
   
-  // Bạn hãy thay thế chuỗi Base64 dưới đây bằng chứng chỉ Root CA thật của bạn
-  const CERTIFICATE_BASE64 = process.env.CA_CERT_BASE64 || "MIIF1zCCBL+gAwIBAgIUT...";
+  // Lấy chuỗi Base64 từ biến môi trường Render (Lưu ý: Không chứa khoảng trắng hoặc ký tự xuống dòng)
+  const CERTIFICATE_BASE64 = (process.env.CA_CERT_BASE64 || "").trim();
 
   const profileXML = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>PayloadDescription</key>
-    <string>Cấu hình Locket Gold VIP &amp; LocketProxy CA dành riêng cho @${cleanUser}. Cài xong: Cài đặt chung -> Giới thiệu -> Cài đặt tin cậy chứng nhận -> Bật tin cậy LocketProxy CA.</string>
-    <key>PayloadDisplayName</key>
-    <string>Locket Gold VIP [${cleanUser}]</string>
-    <key>PayloadIdentifier</key>
-    <string>com.tocam.locketgold.${cleanUser}</string>
-    <key>PayloadType</key>
-    <string>Configuration</string>
-    <key>PayloadUUID</key>
-    <string>7B8394AA-C211-4F12-8822-${Date.now().toString().slice(-8)}</string>
-    <key>PayloadVersion</key>
-    <integer>1</integer>
-    <key>PayloadContent</key>
-    <array>
-        <!-- PHẦN CHỨNG CHỈ LOCKETPROXY CA -->
-        <dict>
-            <key>PayloadCertificateFileName</key>
-            <string>LocketProxyCA.cer</string>
-            <key>PayloadContent</key>
-            <data>${CERTIFICATE_BASE64}</data>
-            <key>PayloadDescription</key>
-            <string>Cài đặt chứng chỉ LocketProxy CA để giải mã HTTPS</string>
-            <key>PayloadDisplayName</key>
-            <string>LocketProxy CA</string>
-            <key>PayloadIdentifier</key>
-            <string>com.tocam.cert.${cleanUser}</string>
-            <key>PayloadType</key>
-            <string>com.apple.security.root</string>
-            <key>PayloadUUID</key>
-            <string>3C8211BC-4D44-4E51-99CC-${Date.now().toString().slice(-8)}</string>
-            <key>PayloadVersion</key>
-            <integer>1</integer>
-        </dict>
-        <!-- PHẦN CÀI ĐẶT DNS FILTER -->
-        <dict>
-            <key>PayloadDescription</key>
-            <string>Cấu hình DNS DoH bảo mật Tổ Cam</string>
-            <key>PayloadDisplayName</key>
-            <string>Locket VIP Filter DNS</string>
-            <key>PayloadIdentifier</key>
-            <string>com.tocam.dns.${cleanUser}</string>
-            <key>PayloadType</key>
-            <string>com.apple.dnsSettings.managed</string>
-            <key>PayloadUUID</key>
-            <string>9F8211BC-3D44-4E51-99CC-${Date.now().toString().slice(-8)}</string>
-            <key>PayloadVersion</key>
-            <integer>1</integer>
-            <key>DNSSettings</key>
-            <dict>
-                <key>ServerAddresses</key>
-                <array>
-                    <string>1.1.1.1</string>
-                    <string>8.8.8.8</string>
-                </array>
-            </dict>
-        </dict>
-    </array>
+	<key>PayloadDescription</key>
+	<string>Cấu hình Locket Gold VIP &amp; LocketProxy CA dành riêng cho @${cleanUser}.</string>
+	<key>PayloadDisplayName</key>
+	<string>Locket Gold VIP [${cleanUser}]</string>
+	<key>PayloadIdentifier</key>
+	<string>com.tocam.locketgold.${cleanUser}</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>7B8394AA-C211-4F12-8822-${Date.now().toString().slice(-8)}</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadCertificateFileName</key>
+			<string>LocketProxyCA.cer</string>
+			<key>PayloadContent</key>
+			<data>${CERTIFICATE_BASE64}</data>
+			<key>PayloadDescription</key>
+			<string>Cài đặt chứng chỉ LocketProxy CA</string>
+			<key>PayloadDisplayName</key>
+			<string>LocketProxy CA</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tocam.cert.${cleanUser}</string>
+			<key>PayloadType</key>
+			<string>com.apple.security.root</string>
+			<key>PayloadUUID</key>
+			<string>3C8211BC-4D44-4E51-99CC-${Date.now().toString().slice(-8)}</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>PayloadDescription</key>
+			<string>Cấu hình DNS DoH bảo mật Tổ Cam</string>
+			<key>PayloadDisplayName</key>
+			<string>Locket VIP Filter DNS</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tocam.dns.${cleanUser}</string>
+			<key>PayloadType</key>
+			<string>com.apple.dnsSettings.managed</string>
+			<key>PayloadUUID</key>
+			<string>9F8211BC-3D44-4E51-99CC-${Date.now().toString().slice(-8)}</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>DNSSettings</key>
+			<dict>
+				<key>ServerAddresses</key>
+				<array>
+					<string>1.1.1.1</string>
+					<string>8.8.8.8</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>`;
 
